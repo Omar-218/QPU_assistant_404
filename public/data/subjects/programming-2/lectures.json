@@ -9,6 +9,13 @@
           "title": "Programming II Dr. Sarhan Lecture1&2",
           "file": "programming_ii_dr_sarhan_lecture12.pdf",
           "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "Programming II Dr. Sarhan Lecture5.pdf",
+          "file": "programming_ii_dr_sarhan_lecture5.pdf",
+          "hidden": false,
+          "requestOrigin": "student-upload"
         }
       ]
     }
