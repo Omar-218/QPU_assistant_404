@@ -29,6 +29,21 @@
       "prUrl": "https://github.com/value0xx-collab/QPU_assistant_404/pull/83",
       "createdAt": "2026-07-27T08:02:05.582Z",
       "decidedAt": "2026-07-27T08:08:08.113Z"
+    },
+    {
+      "id": "evt_1785181049888_4c8k",
+      "subjectId": "english-language-1",
+      "subjectName": "اللغة الإنجليزية (1)",
+      "type": "exam",
+      "typeLabel": "امتحان",
+      "title": "asdf",
+      "date": "2026-07-30",
+      "submittedByLabel": "",
+      "status": "rejected",
+      "adminNote": "",
+      "prUrl": "https://github.com/value0xx-collab/QPU_assistant_404/pull/1",
+      "createdAt": "2026-07-27T19:37:31.406Z",
+      "decidedAt": "2026-07-27T19:46:18.368Z"
     }
   ]
 }
