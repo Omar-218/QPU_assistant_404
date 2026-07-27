@@ -97,6 +97,15 @@ export default function Subject() {
         </div>
       )}
 
+      {/* ⚠️ جديد: نبذة/رسالة عن المادة (description) — نص خام فقط، بلا Markdown/HTML
+          (نفس عرض عنصر note بـ LectureItem.jsx: white-space: pre-wrap). حقل عرض
+          مستقل تماماً، بلا أي علاقة بـ professorVariants/sections. */}
+      {subject.description && (
+        <div className="mt-3 whitespace-pre-wrap rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm text-text">
+          {subject.description}
+        </div>
+      )}
+
       {activeEvents.length > 0 && (
         <div className="mt-4 rounded-md border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-text">
           <p className="font-bold">📌 أحداث قريبة لهذه المادة</p>

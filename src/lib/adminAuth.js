@@ -7,8 +7,8 @@
 const STORAGE_KEY = "admin_token";
 
 // نفس الريبو المنشور فعلياً — مُحدَّث 2026-07-27 بعد انتقال المشروع لحساب
-// جديد بالكامل (value0xx-collab). راجع أيضاً ملاحظة تصحيح DEFAULT_REPO بسجل عضو 5.
-export const DEFAULT_OWNER = "value0xx-collab";
+// جديد بالكامل (Omar-218). راجع أيضاً ملاحظة تصحيح DEFAULT_REPO بسجل عضو 5.
+export const DEFAULT_OWNER = "Omar-218";
 export const DEFAULT_REPO = "QPU_assistant_404";
 
 /** يتحقق من صلاحية التوكن عبر GitHub API مباشرة (بلا أي خادم وسيط).

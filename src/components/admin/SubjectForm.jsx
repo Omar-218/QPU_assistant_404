@@ -43,7 +43,7 @@ function isValidUrl(u) {
 
 /**
  * Props:
- *  - initialSubject?: subject.json كما هو (القسم 4.3) — غيابه يعني "مادة جديدة"
+ *  - initialSubject?: subject.json كما هو (القسم 4.3، يشمل الآن description؟ الاختياري) — غيابه يعني "مادة جديدة"
  *  - initialLecturesByVariant?: { [professorId|"_default"]: { sections: [...] } }
  *      بيانات lectures.json/lectures-{prof}.json الحالية، بلا فلترة hidden (لوحة تحكم).
  *  - existingIds?: string[] — لتفادي تكرار الـ id عند مادة جديدة
@@ -63,6 +63,10 @@ export default function SubjectForm({
   const [name, setName] = useState(initialSubject?.name ?? prefill?.name ?? "");
   const [code, setCode] = useState(initialSubject?.code ?? prefill?.code ?? "");
   const [hidden, setHidden] = useState(initialSubject?.hidden ?? false);
+  // ⚠️ جديد: نبذة/رسالة عن المادة تُعرَض أعلى صفحة المادة للطالب — نص خام
+  // فقط (بلا Markdown/HTML)، بمعزل تام عن أي منطق آخر (نفس نمط سطري
+  // theoryProfessorLabel/labProfessorLabel أدناه).
+  const [description, setDescription] = useState(initialSubject?.description ?? "");
   const [slug, setSlug] = useState(initialSubject?.id ?? prefill?.id ?? "");
   // slug من الخطة (prefill.id) مؤكَّد وصحيح أصلاً (نفس id بالخطة الرسمية)، فلا داعي
   // لإعادة اقتراحه تلقائياً من الاسم كما لو كُتب يدوياً.
@@ -249,6 +253,7 @@ export default function SubjectForm({
         name,
         code,
         hidden,
+        description: description.trim(),
         sectionProfessors: {
           theory: theoryProfessorLabel.trim(),
           lab: labProfessorLabel.trim(),
@@ -281,6 +286,7 @@ export default function SubjectForm({
     name,
     code,
     hidden,
+    description,
     multiProfessor,
     effectiveProfessorId,
     isNewProfessor,
@@ -343,6 +349,20 @@ export default function SubjectForm({
               className="h-4 w-4"
             />
             إخفاء المادة بالكامل عن الطلاب
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-text sm:col-span-2">
+            نبذة أو رسالة عن المادة (اختياري)
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="rounded-md border border-border bg-bg px-3 py-1.5 text-text"
+              placeholder="مثال: يُفضَّل إحضار الآلة الحاسبة كل محاضرة، والمراجعة أسبوعياً بدل التجميع قبل الامتحان."
+            />
+            <span className="text-xs text-text-muted">
+              نص خام فقط (بلا Markdown أو HTML) — يظهر أعلى صفحة المادة للطالب مباشرة.
+            </span>
           </label>
         </div>
       </section>

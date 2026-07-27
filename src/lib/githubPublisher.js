@@ -38,6 +38,12 @@
 //                                  // نفسها). "دوام النظري: السبت / دوام العملي: الأحد" بصفحة
 //                                  // المادة. مصدره جدول دوام رسمي أرسله المستخدم مباشرة، لا
 //                                  // نموذج SubjectForm.jsx بعد (يُضاف يدوياً/بجلسة تحديث دفعة).
+//     description?: string, // ⚠️ جديد: نبذة/رسالة عن المادة تُعرَض أعلى صفحة
+//                                  // المادة (Subject.jsx)، نص خام فقط (بلا Markdown/HTML —
+//                                  // نفس قيد content بعنصر note). نفس نمط الحفظ التلقائي
+//                                  // لـ sectionProfessors/scheduleDays: تُحفَظ القيمة الحالية
+//                                  // لو لم تُمرَّر بهذه النشرة، وتُحذَف فقط لو مُرِّر نص فارغ
+//                                  // صراحة (بعد trim).
 //   items: Array<{
 //     type?: "pdf"|"image"|"link"|"note",  // غيابه = "pdf" دائماً (توافق عكسي)
 //     title: string,
@@ -221,6 +227,19 @@ export function buildSubjectPackage({ subjectMeta, items = [] }) {
       ...(nextScheduleDays.theory ? { theory: nextScheduleDays.theory } : {}),
       ...(nextScheduleDays.lab ? { lab: nextScheduleDays.lab } : {}),
     };
+  }
+
+  // ⚠️ جديد: نبذة/رسالة وصفية للمادة (description) — نص خام فقط، بلا
+  // Markdown/HTML (نفس قيد content بعنصر note، القسم 13.1 بـ data-schema.md).
+  // نفس نمط sectionProfessors/scheduleDays أعلاه حرفياً: تُحفظ القيمة
+  // الحالية تلقائياً لو لم تُمرَّر بهذه النشرة تحديداً، ولا تُحذَف إلا لو
+  // مُرِّر نص فارغ صراحة.
+  const incomingDescription = subjectMeta.description;
+  const prevDescription = subjectMeta.existingSubject?.description;
+  const nextDescription =
+    incomingDescription !== undefined ? incomingDescription : prevDescription;
+  if (typeof nextDescription === "string" && nextDescription.trim()) {
+    subjectJson.description = nextDescription.trim();
   }
 
   if (multiProfessor) {

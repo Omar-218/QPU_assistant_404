@@ -20,6 +20,7 @@
   "name": "الدارات الكهربائية",
   "code": "1130700",
   "hidden": false,
+  "description": "يُفضَّل إحضار الآلة الحاسبة كل محاضرة، والمراجعة أسبوعياً بدل التجميع قبل الامتحان.",
   "professorVariants": [
     { "professorId": "prof-ahmad", "professorName": "د. أحمد", "active": true, "lecturesFile": "lectures-prof-ahmad.json" }
   ]
@@ -27,6 +28,11 @@
 ```
 - `professorVariants` اختياري تماماً — غيابه (كما في `subjects/database/subject.json`) يعني القراءة من `lectures.json` مباشرة.
 - نشِط واحد فقط (`active: true`) بأي لحظة ضمن `professorVariants` — يضمنه `buildSubjectPackage()` تلقائياً.
+- **`description`** (⚠️ جديد): نبذة/رسالة اختيارية عن المادة يضيفها الآدمن بـ `SubjectForm.jsx`،
+  تُعرَض أعلى صفحة المادة للطالب (`Subject.jsx`) مباشرة بعد بيانات الدكتور/الدوام. نص خام فقط —
+  **ممنوع Markdown أو HTML** (نفس قيد `content` بعنصر `note`، §13.1). تُحفَظ تلقائياً بنفس نمط
+  `sectionProfessors`/`scheduleDays`: القيمة الحالية تبقى كما هي لو لم تُمرَّر بنشرة معيّنة، ولا
+  تُحذَف إلا بنص فارغ صريح.
 
 ## 2. `lectures.json` / `lectures-{professorId}.json`
 
