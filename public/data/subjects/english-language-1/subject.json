@@ -2,5 +2,8 @@
   "id": "english-language-1",
   "name": "اللغة الإنجليزية (1)",
   "code": "3210000",
-  "hidden": false
+  "hidden": false,
+  "scheduleDays": {
+    "theory": "الاثنين 08:30 - 15:30 (ق 7)"
+  }
 }

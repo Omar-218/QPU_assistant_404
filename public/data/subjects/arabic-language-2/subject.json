@@ -10,5 +10,8 @@
       "active": true,
       "lecturesFile": "lectures-prof-sawsan-almiqdad.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": "الاثنين 08:30 - 15:30 (ق 7)"
+  }
 }
