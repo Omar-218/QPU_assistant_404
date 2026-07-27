@@ -123,7 +123,7 @@
 ## [التاريخ: 2026-07-20 — إصلاح تكرار "المواد لا تظهر بالقائمة" بعد النشر]
 
 ### ما تم إنجازه
-- **قبل أي تعديل**، سحبت المشروع المنشور فعلياً من `https://github.com/Omar-218x-collab/QPU_assistant_404`
+- **قبل أي تعديل**، سحبت المشروع المنشور فعلياً من `https://github.com/value0xx-collab/QPU_assistant_404`
   (main) مباشرة (`raw.githubusercontent.com` + `codeload.github.com`، لأن `api.github.com`
   كان Rate-limited من بيئتي)، لأن نسخي المحلية السابقة كانت أقدم من main — وجدت أن `SubjectForm.jsx`
   و`AdminSubjectEditor.jsx` و`AdminSectionsManager.jsx` تطوّرت فعلياً على main (إضافة

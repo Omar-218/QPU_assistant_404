@@ -21,7 +21,7 @@
 
 - React + Vite + react-router-dom + Tailwind (عبر `@theme`) + Fuse.js للبحث
 - GitHub Pages — **Static بالكامل**، لا خادم، لا قاعدة بيانات
-- الريبو المقترح: `Omar-218x-collab/assistant404-v2` (أو فرع جديد بنفس الريبو — قرارك)
+- الريبو المقترح: `value0xx-collab/assistant404-v2` (أو فرع جديد بنفس الريبو — قرارك)
 
 ---
 

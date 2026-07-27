@@ -43,7 +43,7 @@ import { transliterateToSlug } from "./idSlug.js";
 const STUDENT_TOKEN = import.meta.env.VITE_UPLOAD_TOKEN || "";
 
 // مكرَّرة عمداً هنا (لا استيراد من adminAuth.js) — راجع ملاحظة العزل أعلى الملف.
-const OWNER = "Omar-218x-collab";
+const OWNER = "value0xx-collab";
 const REPO = "QPU_assistant_404";
 const BASE_BRANCH = "main";
 

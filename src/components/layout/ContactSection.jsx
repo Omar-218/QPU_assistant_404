@@ -15,13 +15,13 @@ const CONTACTS = [
   {
     id: "whatsapp",
     label: "واتساب",
-    href: "https://wa.me/963936286784", // 🔧 عدّل الرقم
+    href: "https://wa.me/212766403599", // 🔧 عدّل الرقم
     icon: ChatIcon,
   },
   {
     id: "telegram",
     label: "تيليجرام",
-    href: "https://t.me/helal0x", // 🔧 عدّل المعرّف
+    href: "https://t.me/AskEnger6598bot?start=40b6a3c36db2b8be370a183d0c5663246111560", // 🔧 عدّل المعرّف
     icon: SendIcon,
   },
 ];
