@@ -1,0 +1,12 @@
+{
+  "id": "computer-architecture",
+  "name": "بنيان الحاسوب",
+  "code": "1120400",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. خالد سلطان"
+  },
+  "scheduleDays": {
+    "theory": "السبت"
+  }
+}

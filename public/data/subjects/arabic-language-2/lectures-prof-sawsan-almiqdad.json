@@ -1,0 +1,50 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "المهارات اللغويّة الأربع",
+          "file": "المهارات_اللغويّة_الأربع.pdf",
+          "hidden": false
+        },
+        {
+          "title": "بناء الأفعال + النص الأول",
+          "file": "بناء_الأفعال_+_النص_الأول.pdf",
+          "hidden": false
+        },
+        {
+          "title": "النص_الثاني",
+          "file": "النص_الثاني.pdf",
+          "hidden": false
+        },
+        {
+          "title": "النص_الثالث",
+          "file": "النص_الثالث.pdf",
+          "hidden": false
+        },
+        {
+          "title": "التعجب",
+          "file": "التعجب.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مهارة الحوار",
+          "file": "مهارة_الحوار.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مهارة القراءة",
+          "file": "مهارة_القراءة.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مهارة_النداء",
+          "file": "مهارة_النداء.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

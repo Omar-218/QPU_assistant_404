@@ -1,0 +1,17 @@
+{
+  "id": "discrete-math",
+  "name": "رياضيات متقطعة",
+  "code": "4320005",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-naser-alnaser",
+      "professorName": "د. ناصر الناصر",
+      "active": true,
+      "lecturesFile": "lectures-prof-naser-alnaser.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "الاثنين"
+  }
+}

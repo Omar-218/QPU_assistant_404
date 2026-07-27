@@ -1,0 +1,22 @@
+{
+  "id": "electronics-1",
+  "name": "الإلكترونيات (1)",
+  "code": "1120200",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. شحادة المرعي",
+    "lab": "م. زهير البيك"
+  },
+  "professorVariants": [
+    {
+      "professorId": "prof-shehade-almaari",
+      "professorName": "د. شحادة المرعي",
+      "active": true,
+      "lecturesFile": "lectures-prof-shehade-almaari.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "الاثنين",
+    "lab": "الاثنين"
+  }
+}

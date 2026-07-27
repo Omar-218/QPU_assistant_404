@@ -1,0 +1,28 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "الفصل  االأول - اجيال الحاسوب",
+          "file": "alfsl_aalawl_ajyal_alhaswb.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "الفصل  الثاني- تمثيل الأعداد",
+          "file": "alfsl_althany_tmthyl_alaadad.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "بنيان حاسوب_الفصل الثالث_هاردوير_قاسيون_الجزءالاول",
+          "file": "bnyan_haswbalfsl_althalthhardwyrqasywnaljzalawl.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

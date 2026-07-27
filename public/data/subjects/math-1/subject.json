@@ -1,0 +1,17 @@
+{
+  "id": "math-1",
+  "name": "رياضيات (1)",
+  "code": "4310000",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-naser-alnaser",
+      "professorName": "د. ناصر الناصر",
+      "active": true,
+      "lecturesFile": "lectures-prof-naser-alnaser.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "الثلاثاء"
+  }
+}

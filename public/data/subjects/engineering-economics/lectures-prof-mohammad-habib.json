@@ -1,0 +1,45 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "اقتصاد_هندسي_1",
+          "file": "اقتصاد_هندسي_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_2",
+          "file": "اقتصاد_هندسي_2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_3",
+          "file": "اقتصاد_هندسي_3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_4",
+          "file": "اقتصاد_هندسي_4.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_5",
+          "file": "اقتصاد_هندسي_5.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_6",
+          "file": "اقتصاد_هندسي_6.pdf",
+          "hidden": false
+        },
+        {
+          "title": "اقتصاد_هندسي_7",
+          "file": "اقتصاد_هندسي_7.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

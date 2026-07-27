@@ -1,0 +1,22 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "مقرر_رياضيات2",
+          "file": "mqrrryadyat2.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "2_رياضيات2",
+          "file": "2ryadyat2.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

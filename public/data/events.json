@@ -1,0 +1,34 @@
+{
+  "events": [
+    {
+      "id": "evt_1785137166429_47ib",
+      "subjectId": "digital-logic",
+      "subjectName": "المنطق الرقمي",
+      "type": "midterm",
+      "typeLabel": "ميد",
+      "title": "ميد بأول محاضرتين",
+      "date": "2026-08-01",
+      "submittedByLabel": "",
+      "status": "approved",
+      "adminNote": "",
+      "prUrl": "https://github.com/al-helal0x/QPU_assistant_404/pull/81",
+      "createdAt": "2026-07-27T07:26:07.891Z",
+      "decidedAt": "2026-07-27T07:26:49.258Z"
+    },
+    {
+      "id": "evt_1785139323019_dogb",
+      "subjectId": "digital-logic",
+      "subjectName": "المنطق الرقمي",
+      "type": "midterm",
+      "typeLabel": "امتحان منتصف الفصل",
+      "title": "ميد بأول ",
+      "date": "2026-08-01",
+      "submittedByLabel": "رونق",
+      "status": "rejected",
+      "adminNote": "",
+      "prUrl": "https://github.com/al-helal0x/QPU_assistant_404/pull/83",
+      "createdAt": "2026-07-27T08:02:05.582Z",
+      "decidedAt": "2026-07-27T08:08:08.113Z"
+    }
+  ]
+}

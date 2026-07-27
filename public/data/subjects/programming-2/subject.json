@@ -1,0 +1,14 @@
+{
+  "id": "programming-2",
+  "name": "برمجة (2)",
+  "code": "1120503",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "علاء السرحان",
+    "lab": "عبدو غزالي"
+  },
+  "scheduleDays": {
+    "theory": "السبت",
+    "lab": "الأحد"
+  }
+}

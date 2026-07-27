@@ -1,0 +1,14 @@
+{
+  "id": "public-health",
+  "name": "الصحة العامة",
+  "code": "3000144",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-yousef-ali",
+      "professorName": "يوسف علي",
+      "active": true,
+      "lecturesFile": "lectures-prof-yousef-ali.json"
+    }
+  ]
+}

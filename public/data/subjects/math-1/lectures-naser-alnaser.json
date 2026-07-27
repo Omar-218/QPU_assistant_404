@@ -1,0 +1,16 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "مقرر رياضيات 1",
+          "file": "mqrr_ryadyat_1.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

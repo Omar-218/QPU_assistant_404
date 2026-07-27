@@ -1,0 +1,22 @@
+{
+  "id": "signals-and-systems",
+  "name": "تحليل النظم والإشارات",
+  "code": "1120900",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. خولة قصاص",
+    "lab": "د. عبد الناصر نوفل"
+  },
+  "professorVariants": [
+    {
+      "professorId": "prof-khawla-qassas",
+      "professorName": "د. خولة قصاص",
+      "active": true,
+      "lecturesFile": "lectures-prof-khawla-qassas.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "الأحد",
+    "lab": "الأحد"
+  }
+}

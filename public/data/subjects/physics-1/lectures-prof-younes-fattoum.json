@@ -1,0 +1,102 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "1_فيزياء1",
+          "file": "1_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "2_فيزياء1",
+          "file": "2_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "3_فيزياء1",
+          "file": "3_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "4_فيزياء1",
+          "file": "4_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "5_فيزياء1",
+          "file": "5_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "6_فيزياء1",
+          "file": "6_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "7_فيزياء1",
+          "file": "7_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "8_فيزياء1",
+          "file": "8_فيزياء1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "ملخص_النواسات",
+          "file": "ملخص_النواسات.pdf",
+          "hidden": false
+        },
+        {
+          "title": "ملخص_الحقل الكهربائي",
+          "file": "ملخص_الحقل_الكهربائي.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "extra",
+      "hidden": false,
+      "items": [
+        {
+          "title": "منهاج فيزيا 2-3",
+          "file": "منهاج_فيزيا_2-3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "منهاج فيزيا 4-7",
+          "file": "منهاج_فيزيا_4-7.pdf",
+          "hidden": false
+        },
+        {
+          "title": "خريطة مفاهيم للمحاضرة 7",
+          "file": "خريطة_مفاهيم_للمحاضرة_7.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "exam",
+      "hidden": false,
+      "items": [
+        {
+          "title": "شرح الكثافة محاضرة 1",
+          "file": "شرح_الكثافة_محاضرة_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "ملخص_الشحنات الكهربائية",
+          "file": "ملخص_الشحنات_الكهربائية.pdf",
+          "hidden": false
+        },
+        {
+          "title": "أوراق عمل الفيزياء 1",
+          "file": "أوراق_عمل_الفيزياء_1.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

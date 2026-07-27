@@ -1,0 +1,51 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "betty_azar_understanding_and_using_english_grammar",
+          "file": "betty_azar_understanding_and_using_english_grammar.pdf",
+          "hidden": false
+        },
+        {
+          "title": "English- تحديد الفاينل",
+          "file": "English-_تحديد_الفاينل.pdf",
+          "hidden": false
+        },
+        {
+          "title": "English- حلول تحديد الفاينل",
+          "file": "English-_حلول_تحديد_الفاينل.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "extra",
+      "hidden": false,
+      "items": [
+        {
+          "title": "شرح قواعد chapter2",
+          "file": "شرح_قواعد_chapter2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "شرح قواعد chapter 3",
+          "file": "شرح_قواعد_chapter_3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "شرح المستقبل اول قاعدتين chapter 4",
+          "file": "شرح_المستقبل_اول_قاعدتين_chapter_4.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Mastering_Verb_Tenses_مراجعة عامة للأزمنة",
+          "file": "Mastering_Verb_Tenses_مراجعة_عامة_للأزمنة.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

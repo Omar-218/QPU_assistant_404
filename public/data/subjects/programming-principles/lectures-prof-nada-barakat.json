@@ -1,0 +1,61 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "مبادئ_البرمجة_1",
+          "file": "مبادئ_البرمجة_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_2",
+          "file": "مبادئ_البرمجة_2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_3",
+          "file": "مبادئ_البرمجة_3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_4",
+          "file": "مبادئ_البرمجة_4.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_5",
+          "file": "مبادئ_البرمجة_5.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_6",
+          "file": "مبادئ_البرمجة_6.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_7",
+          "file": "مبادئ_البرمجة_7.pdf",
+          "hidden": false
+        },
+        {
+          "title": "مبادئ_البرمجة_8",
+          "file": "مبادئ_البرمجة_8.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "extra",
+      "hidden": false,
+      "items": [
+        {
+          "title": "مخططات مساعدة لمحاضرات المبادئ ",
+          "file": "مخططات_مساعدة_لمحاضرات_المبادئ.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

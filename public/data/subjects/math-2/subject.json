@@ -1,0 +1,12 @@
+{
+  "id": "math-2",
+  "name": "رياضيات (2)",
+  "code": "4310001",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "ناصر الناصر"
+  },
+  "scheduleDays": {
+    "theory": "الثلاثاء"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "دارات_نظري_1",
+          "file": "دارات_نظري_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_نظري_2",
+          "file": "دارات_نظري_2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_نظري_3",
+          "file": "دارات_نظري_3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_نظري_4",
+          "file": "دارات_نظري_4.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_نظري_5",
+          "file": "دارات_نظري_5.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_نظري_6",
+          "file": "دارات_نظري_6.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "lab",
+      "hidden": false,
+      "items": [
+        {
+          "title": "دارات_عملي_1",
+          "file": "دارات_عملي_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_عملي_2",
+          "file": "دارات_عملي_2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_عملي_3",
+          "file": "دارات_عملي_3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "دارات_عملي_4",
+          "file": "دارات_عملي_4.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "physics-1",
+  "name": "الفيزياء (1)",
+  "code": "4110000",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. يونس فطوم",
+    "lab": "د. مجد حماد"
+  },
+  "professorVariants": [
+    {
+      "professorId": "prof-younes-fattoum",
+      "professorName": "د. يونس فطوم",
+      "active": true,
+      "lecturesFile": "lectures-prof-younes-fattoum.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "السبت",
+    "lab": "السبت"
+  }
+}

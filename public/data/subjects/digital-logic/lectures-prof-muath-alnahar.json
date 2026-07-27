@@ -1,0 +1,20 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "منطق_رقمي_1",
+          "file": "منطق_رقمي_1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "منطق_رقمي_2",
+          "file": "منطق_رقمي_2.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

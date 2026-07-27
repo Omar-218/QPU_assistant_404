@@ -1,0 +1,14 @@
+{
+  "id": "arabic-language-2",
+  "name": "اللغة العربية (2)",
+  "code": "3120001",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-sawsan-almiqdad",
+      "professorName": "سوسن المقداد",
+      "active": true,
+      "lecturesFile": "lectures-prof-sawsan-almiqdad.json"
+    }
+  ]
+}

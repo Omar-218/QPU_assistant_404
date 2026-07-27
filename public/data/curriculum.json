@@ -1,0 +1,548 @@
+{
+  "years": [
+    {
+      "year": 1,
+      "levels": [
+        {
+          "level": 1,
+          "semesterLabel": "الفصل الأول - المستوى الأول",
+          "courses": [
+            {
+              "id": "computer-skills",
+              "name": "مهارات الحاسوب",
+              "code": "1110500",
+              "hours": 3
+            },
+            {
+              "id": "english-language-1",
+              "name": "اللغة الإنجليزية (1)",
+              "code": "3210000",
+              "hours": 3
+            },
+            {
+              "id": "math-1",
+              "name": "رياضيات (1)",
+              "code": "4310000",
+              "hours": 4,
+              "hidden": true
+            },
+            {
+              "id": "physics-1",
+              "name": "الفيزياء (1)",
+              "code": "4110000",
+              "hours": 4
+            },
+            {
+              "id": "programming-principles",
+              "name": "مبادئ البرمجة",
+              "code": "1110501",
+              "hours": 3
+            },
+            {
+              "id": "engineering-workshops",
+              "name": "ورشات هندسية",
+              "code": "1310000",
+              "hours": 1
+            }
+          ],
+          "totalHours": 18
+        },
+        {
+          "level": 2,
+          "semesterLabel": "الفصل الثاني - المستوى الثاني",
+          "courses": [
+            {
+              "id": "arabic-language-1",
+              "name": "اللغة العربية (1)",
+              "code": "3110000",
+              "hours": 2
+            },
+            {
+              "id": "technical-english-2",
+              "name": "لغة إنجليزية تخصصية (2)",
+              "code": "3210001",
+              "hours": 3
+            },
+            {
+              "id": "math-2",
+              "name": "رياضيات (2)",
+              "code": "4310001",
+              "hours": 3
+            },
+            {
+              "id": "engineering-economics",
+              "name": "الاقتصاد الهندسي",
+              "code": "2210002",
+              "hours": 3
+            },
+            {
+              "id": "programming-1",
+              "name": "برمجة (1)",
+              "code": "1110502",
+              "hours": 3
+            },
+            {
+              "id": "circuits",
+              "name": "الدارات الكهربائية",
+              "code": "1130700",
+              "hours": 3
+            }
+          ],
+          "totalHours": 17
+        }
+      ]
+    },
+    {
+      "year": 2,
+      "levels": [
+        {
+          "level": 3,
+          "semesterLabel": "الفصل الأول - المستوى الثالث",
+          "courses": [
+            {
+              "id": "electronics-1",
+              "name": "الإلكترونيات (1)",
+              "code": "1120200",
+              "hours": 3
+            },
+            {
+              "id": "math-3",
+              "name": "رياضيات (3)",
+              "code": "4320003",
+              "hours": 3
+            },
+            {
+              "id": "statistics-probability",
+              "name": "الإحصاء والاحتمالات",
+              "code": "4320004",
+              "hours": 3
+            },
+            {
+              "id": "programming-2",
+              "name": "برمجة (2)",
+              "code": "1120503",
+              "hours": 3
+            },
+            {
+              "id": "digital-logic",
+              "name": "المنطق الرقمي",
+              "code": "1120201",
+              "hours": 4
+            }
+          ],
+          "totalHours": 16
+        },
+        {
+          "level": 4,
+          "semesterLabel": "الفصل الثاني - المستوى الرابع",
+          "courses": [
+            {
+              "id": "algorithms-data-structures",
+              "name": "خوارزميات وبنى المعطيات",
+              "code": "1120504",
+              "hours": 3
+            },
+            {
+              "id": "discrete-math",
+              "name": "رياضيات متقطعة",
+              "code": "4320005",
+              "hours": 3
+            },
+            {
+              "id": "computer-architecture",
+              "name": "بنيان الحاسوب",
+              "code": "1120400",
+              "hours": 3
+            },
+            {
+              "id": "electronics-2",
+              "name": "الإلكترونيات (2)",
+              "code": "1120202",
+              "hours": 3
+            },
+            {
+              "id": "signals-and-systems",
+              "name": "تحليل النظم والإشارات",
+              "code": "1120900",
+              "hours": 3
+            },
+            {
+              "id": "elective-uni-1",
+              "name": "اختياري جامعة (1)",
+              "code": "",
+              "hours": 2
+            }
+          ],
+          "totalHours": 17
+        }
+      ]
+    },
+    {
+      "year": 3,
+      "levels": [
+        {
+          "level": 5,
+          "semesterLabel": "الفصل الأول - المستوى الخامس",
+          "courses": [
+            {
+              "id": "microprocessors",
+              "name": "المعالجات الصغرية",
+              "code": "1130401",
+              "hours": 4
+            },
+            {
+              "id": "database",
+              "name": "قواعد المعطيات",
+              "code": "1140310",
+              "hours": 3,
+              "subjectSlug": "database"
+            },
+            {
+              "id": "communications",
+              "name": "الاتصالات",
+              "code": "1130300",
+              "hours": 3
+            },
+            {
+              "id": "numerical-analysis",
+              "name": "التحليل العددي",
+              "code": "4330006",
+              "hours": 3
+            },
+            {
+              "id": "programming-languages",
+              "name": "لغات البرمجة",
+              "code": "1130505",
+              "hours": 3
+            },
+            {
+              "id": "elective-uni-2",
+              "name": "اختياري جامعة (2)",
+              "code": "",
+              "hours": 2
+            }
+          ],
+          "totalHours": 18
+        },
+        {
+          "level": 6,
+          "semesterLabel": "الفصل الثاني - المستوى السادس",
+          "courses": [
+            {
+              "id": "operating-systems",
+              "name": "أنظمة التشغيل",
+              "code": "1140600",
+              "hours": 3
+            },
+            {
+              "id": "advanced-communications",
+              "name": "الاتصالات المتقدمة",
+              "code": "1130301",
+              "hours": 3
+            },
+            {
+              "id": "operations-research",
+              "name": "بحوث العمليات",
+              "code": "4330007",
+              "hours": 3
+            },
+            {
+              "id": "computer-networks",
+              "name": "شبكات الحاسوب",
+              "code": "1130800",
+              "hours": 3
+            },
+            {
+              "id": "ai-principles",
+              "name": "مبادئ الذكاء الصنعي",
+              "code": "1141000",
+              "hours": 3
+            },
+            {
+              "id": "formal-languages",
+              "name": "اللغات الصورية",
+              "code": "1141001",
+              "hours": 3
+            }
+          ],
+          "totalHours": 18
+        }
+      ]
+    },
+    {
+      "year": 4,
+      "levels": [
+        {
+          "level": 7,
+          "semesterLabel": "الفصل الأول - المستوى السابع",
+          "hasSpecializations": true,
+          "tracks": {
+            "هندسة البرمجيات ونظم المعلومات": [
+              {
+                "id": "advanced-algorithms",
+                "name": "خوارزميات متقدمة",
+                "code": "0730511",
+                "hours": 3
+              },
+              {
+                "id": "software-systems-analysis-design",
+                "name": "تحليل وتصميم النظم البرمجية",
+                "code": "1141100",
+                "hours": 3
+              },
+              {
+                "id": "object-oriented-programming",
+                "name": "البرمجة الشيئية (تأكد من الاسم)",
+                "code": "1050811",
+                "hours": 3
+              },
+              {
+                "id": "compilers",
+                "name": "المترجمات",
+                "code": "1140601",
+                "hours": 3
+              },
+              {
+                "id": "elective-dept-1a",
+                "name": "اختياري قسم (1)",
+                "code": "",
+                "hours": 3
+              },
+              {
+                "id": "elective-uni-3a",
+                "name": "اختياري جامعة (3)",
+                "code": "",
+                "hours": 2
+              },
+              {
+                "id": "engineering-ethics",
+                "name": "أخلاقيات مهنة الهندسة",
+                "code": "1130001",
+                "hours": 1
+              }
+            ],
+            "ذكاء صنعي": [
+              {
+                "id": "advanced-algorithms",
+                "name": "خوارزميات متقدمة",
+                "code": "0730511",
+                "hours": 3
+              },
+              {
+                "id": "software-systems-analysis-design",
+                "name": "تحليل وتصميم النظم البرمجية",
+                "code": "1141100",
+                "hours": 3
+              },
+              {
+                "id": "object-oriented-programming",
+                "name": "البرمجة الشيئية (تأكد من الاسم)",
+                "code": "1050811",
+                "hours": 3
+              },
+              {
+                "id": "compilers",
+                "name": "المترجمات",
+                "code": "1140601",
+                "hours": 3
+              },
+              {
+                "id": "elective-dept-1b",
+                "name": "اختياري قسم (1)",
+                "code": "",
+                "hours": 3
+              },
+              {
+                "id": "elective-uni-3b",
+                "name": "اختياري جامعة (3)",
+                "code": "",
+                "hours": 2
+              },
+              {
+                "id": "engineering-ethics",
+                "name": "أخلاقيات مهنة الهندسة",
+                "code": "1130001",
+                "hours": 1
+              }
+            ],
+            "النظم والشبكات الحاسوبية": [
+              {
+                "id": "advanced-algorithms",
+                "name": "خوارزميات متقدمة",
+                "code": "0730511",
+                "hours": 3
+              },
+              {
+                "id": "software-systems-analysis-design",
+                "name": "تحليل وتصميم النظم البرمجية",
+                "code": "1141100",
+                "hours": 3
+              },
+              {
+                "id": "formal-languages",
+                "name": "اللغات الصورية",
+                "code": "1141001",
+                "hours": 3
+              },
+              {
+                "id": "object-oriented-programming",
+                "name": "البرمجة الشيئية (تأكد من الاسم)",
+                "code": "1050811",
+                "hours": 3
+              },
+              {
+                "id": "network-protocols",
+                "name": "بروتوكولات الشبكات",
+                "code": "1140801",
+                "hours": 3
+              },
+              {
+                "id": "elective-dept-1c",
+                "name": "اختياري قسم (1)",
+                "code": "",
+                "hours": 3
+              }
+            ]
+          },
+          "totalHours": 18
+        },
+        {
+          "level": 8,
+          "semesterLabel": "الفصل الثاني - المستوى الثامن",
+          "hasSpecializations": true,
+          "tracks": {
+            "هندسة البرمجيات ونظم المعلومات": [
+              {
+                "id": "software-engineering-1",
+                "name": "هندسة البرمجيات (1)",
+                "code": "1141101",
+                "hours": 3
+              },
+              {
+                "id": "graph-theory-cad",
+                "name": "نظرية البيان والتصميم بمعونة الحاسب",
+                "code": "1151202",
+                "hours": 3
+              },
+              {
+                "id": "advanced-database",
+                "name": "قواعد المعطيات المتقدمة",
+                "code": "0140711",
+                "hours": 3
+              },
+              {
+                "id": "multimedia-hypermedia-systems",
+                "name": "الوسائط المتعددة ونظم الوسائط الترابطية",
+                "code": "1150804",
+                "hours": 3
+              },
+              {
+                "id": "elective-dept-2",
+                "name": "اختياري قسم (2)",
+                "code": "",
+                "hours": 3
+              },
+              {
+                "id": "elective-uni-4",
+                "name": "اختياري جامعة (4)",
+                "code": "",
+                "hours": 2
+              }
+            ]
+          },
+          "totalHours": 17
+        }
+      ]
+    }
+  ],
+  "electiveGroups": [
+    {
+      "id": "university-electives",
+      "label": "متطلبات الجامعة الاختيارية",
+      "creditHours": 8,
+      "courses": [
+        {
+          "id": "arabic-language-2",
+          "name": "اللغة العربية (2)",
+          "code": "3120001",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0,
+          "prerequisite": "اللغة العربية (1)"
+        },
+        {
+          "id": "english-writing-skills",
+          "name": "مهارات الكتابة باللغة الانكليزية",
+          "code": "3230002",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "english-communication-skills",
+          "name": "مهارات الاتصال باللغة الانكليزية",
+          "code": "3230004",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "economics",
+          "name": "علم الاقتصاد",
+          "code": "2000022",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "environment-and-society",
+          "name": "بيئة ومجتمع",
+          "code": "4530001",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "public-health",
+          "name": "الصحة العامة",
+          "code": "3000144",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "national-culture",
+          "name": "الثقافة القومية",
+          "code": "2000246",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "contemporary-issues",
+          "name": "قضايا معاصرة",
+          "code": "4000347",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "civilizations",
+          "name": "الحضارات (العربية والإسلامية والعالمية)",
+          "code": "3000448",
+          "hours": 3,
+          "theoryHours": 2,
+          "labHours": 0
+        },
+        {
+          "id": "art-of-dialogue-rhetoric",
+          "name": "فن الحوار والخطابة",
+          "code": "3000231",
+          "hours": 2,
+          "theoryHours": 2,
+          "labHours": 0
+        }
+      ]
+    }
+  ]
+}

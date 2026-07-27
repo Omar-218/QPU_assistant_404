@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>assistant404 — أرشيف أكاديمي</title>
+    <script>
+      // تنفيذ فوري قبل تحميل React لمنع وميض الثيم (FOUC) — طلب عضو 1 (سجله، جولة 2).
+      // يقرأ نفس مفتاح localStorage الذي يستخدمه ThemeContext.jsx (عضو 1): "theme".
+      (function () {
+        try {
+          var saved = localStorage.getItem("theme");
+          var theme =
+            saved === "light" || saved === "dark"
+              ? saved
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

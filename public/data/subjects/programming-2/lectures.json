@@ -1,0 +1,16 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "Programming II Dr. Sarhan Lecture1&2",
+          "file": "programming_ii_dr_sarhan_lecture12.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

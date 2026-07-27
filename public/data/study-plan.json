@@ -1,0 +1,122 @@
+{
+  "courses": [
+    {
+      "id": "circuits",
+      "name": "الدارات الكهربائية",
+      "code": "1130700",
+      "hidden": false
+    },
+    {
+      "id": "computer-skills",
+      "name": "مهارات الحاسوب",
+      "code": "1110500",
+      "hidden": false
+    },
+    {
+      "id": "arabic-language-1",
+      "name": "اللغة العربية (1)",
+      "code": "3110000",
+      "hidden": false
+    },
+    {
+      "id": "programming-principles",
+      "name": "مبادئ البرمجة",
+      "code": "1110501",
+      "hidden": false
+    },
+    {
+      "id": "engineering-workshops",
+      "name": "ورشات هندسية",
+      "code": "1310000",
+      "hidden": false
+    },
+    {
+      "id": "engineering-economics",
+      "name": "الاقتصاد الهندسي",
+      "code": "2210002",
+      "hidden": false
+    },
+    {
+      "id": "programming-1",
+      "name": "برمجة (1)",
+      "code": "1110502",
+      "hidden": false
+    },
+    {
+      "id": "electronics-1",
+      "name": "الإلكترونيات (1)",
+      "code": "1120200",
+      "hidden": false
+    },
+    {
+      "id": "digital-logic",
+      "name": "المنطق الرقمي",
+      "code": "1120201",
+      "hidden": false
+    },
+    {
+      "id": "english-language-1",
+      "name": "اللغة الإنجليزية (1)",
+      "code": "3210000",
+      "hidden": false
+    },
+    {
+      "id": "physics-1",
+      "name": "الفيزياء (1)",
+      "code": "4110000",
+      "hidden": false
+    },
+    {
+      "id": "math-1",
+      "name": "رياضيات (1)",
+      "code": "4310000",
+      "hidden": false
+    },
+    {
+      "id": "discrete-math",
+      "name": "رياضيات متقطعة",
+      "code": "4320005",
+      "hidden": false
+    },
+    {
+      "id": "signals-and-systems",
+      "name": "تحليل النظم والإشارات",
+      "code": "1120900",
+      "hidden": false
+    },
+    {
+      "id": "public-health",
+      "name": "الصحة العامة",
+      "code": "3000144",
+      "hidden": false
+    },
+    {
+      "id": "technical-english-2",
+      "name": "اللغة الإنجليزية الفنية (2)",
+      "code": "3210001",
+      "hidden": false
+    },
+    {
+      "id": "arabic-language-2",
+      "name": "اللغة العربية (2)",
+      "code": "3120001",
+      "hidden": false
+    },
+    {
+      "id": "programming-2",
+      "name": "برمجة (2)",
+      "code": "1120503"
+    },
+    {
+      "id": "computer-architecture",
+      "name": "بنيان الحاسوب",
+      "code": "1120400",
+      "hidden": false
+    },
+    {
+      "id": "math-2",
+      "name": "رياضيات (2)",
+      "code": "4310001"
+    }
+  ]
+}

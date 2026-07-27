@@ -1,0 +1,17 @@
+{
+  "id": "digital-logic",
+  "name": "المنطق الرقمي",
+  "code": "1120201",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-muath-alnahar",
+      "professorName": "د. معاذ النهار",
+      "active": true,
+      "lecturesFile": "lectures-prof-muath-alnahar.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "السبت"
+  }
+}

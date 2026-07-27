@@ -1,0 +1,14 @@
+{
+  "id": "database",
+  "name": "قواعد المعطيات",
+  "code": "1140310",
+  "hidden": true,
+  "professorVariants": [
+    {
+      "professorId": "prof-abdullah-alomar",
+      "professorName": "د. عبد الله العمر",
+      "active": true,
+      "lecturesFile": "lectures-prof-abdullah-alomar.json"
+    }
+  ]
+}

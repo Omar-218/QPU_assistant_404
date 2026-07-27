@@ -1,0 +1,22 @@
+{
+  "id": "circuits",
+  "name": "الدارات الكهربائية - 1",
+  "code": "1130700",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. أحمد العريفي",
+    "lab": "د. أحمد العريفي، م. سليمان محمد"
+  },
+  "professorVariants": [
+    {
+      "professorId": "prof-ahmad",
+      "professorName": "د. أحمد العريفي",
+      "active": true,
+      "lecturesFile": "lectures-prof-ahmad.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "الأحد",
+    "lab": "الأحد"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "programming-principles",
+  "name": "مبادئ البرمجة",
+  "code": "1110501",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-nada-barakat",
+      "professorName": "د. ندى بركات",
+      "active": true,
+      "lecturesFile": "lectures-prof-nada-barakat.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "السبت",
+    "lab": "السبت"
+  }
+}

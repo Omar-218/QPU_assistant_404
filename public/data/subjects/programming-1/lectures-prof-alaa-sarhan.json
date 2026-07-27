@@ -1,0 +1,76 @@
+{
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture1",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture1.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture2",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture2.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture3",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture3.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture4",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture4.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture5",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture5.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture6",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture6.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture7",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture7.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Cpp by Dr. Alaaeddin Sarhan Lecture8",
+          "file": "Cpp_by_Dr._Alaaeddin_Sarhan_Lecture8.pdf",
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "section": "exam",
+      "hidden": false,
+      "items": [
+        {
+          "title": "Quiz1_for All Groups without solution",
+          "file": "Quiz1_for_All_Groups_without_solution.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Quiz2_for All Groups without solution",
+          "file": "Quiz2_for_All_Groups_without_solution.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Quiz1_for All Groups with solution",
+          "file": "Quiz1_for_All_Groups_with_solution.pdf",
+          "hidden": false
+        },
+        {
+          "title": "Quiz2_for All Groups with solution",
+          "file": "Quiz2_for_All_Groups_with_solution.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
+}

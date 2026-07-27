@@ -1,0 +1,14 @@
+{
+  "id": "engineering-workshops",
+  "name": "ورشات هندسية",
+  "code": "1310000",
+  "hidden": false,
+  "professorVariants": [
+    {
+      "professorId": "prof-kamal-sakiker",
+      "professorName": "كمال سكيكر",
+      "active": true,
+      "lecturesFile": "lectures-prof-kamal-sakiker.json"
+    }
+  ]
+}

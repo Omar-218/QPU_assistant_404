@@ -1,0 +1,22 @@
+{
+  "id": "programming-1",
+  "name": "برمجة (1)",
+  "code": "1110502",
+  "hidden": false,
+  "sectionProfessors": {
+    "theory": "د. علاء سرحان",
+    "lab": "م. عبدو غزالي"
+  },
+  "professorVariants": [
+    {
+      "professorId": "prof-alaa-sarhan",
+      "professorName": "د. علاء سرحان",
+      "active": true,
+      "lecturesFile": "lectures-prof-alaa-sarhan.json"
+    }
+  ],
+  "scheduleDays": {
+    "theory": "السبت",
+    "lab": "الأحد"
+  }
+}
