@@ -63,14 +63,13 @@ export default function UploadRequestForm({ subjectId, subjectName, onCancel, on
   if (status === "done") {
     return (
       <div className="rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm">
-        <p className="text-text-h">تم تجهيز طلب الرفع ✅</p>
+        <p className="text-text-h">تم إرسال طلب الرفع بنجاح ✅</p>
         <p className="mt-1 text-text-muted">
-          سيظهر للأدمن بطابور المراجعة مع الملف المرفق، وما راح يُنشَر إلا بعد الموافقة.
+          سيُحال طلب الرفع، مرفقًا بالملف، إلى المشرف لمراجعته، وسيُنشر بعد الموافقة عليه.
         </p>
       </div>
     );
   }
-
   return (
     <form
       onSubmit={handleSubmit}

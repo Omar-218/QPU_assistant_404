@@ -63,9 +63,9 @@ export default function EventRequestForm({ subjectId, subjectName, onCancel, onS
   if (status === "done") {
     return (
       <div className="rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm">
-        <p className="text-text-h">تم تجهيز طلبك ✅</p>
+        <p className="text-text-h">تم إرسال طلبك بنجاح ✅</p>
         <p className="mt-1 text-text-muted">
-          سيظهر للأدمن بطابور المراجعة، وما راح ينشر بصفحة المادة إلا بعد الموافقة.
+          سيُحال طلبك إلى المشرف لمراجعته، وسيُنشر في صفحة المادة بعد الموافقة عليه.
         </p>
       </div>
     );
