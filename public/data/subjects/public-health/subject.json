@@ -3,6 +3,9 @@
   "name": "الصحة العامة",
   "code": "3000144",
   "hidden": false,
+  "scheduleDays": {
+    "theory": "الثلاثاء 08:30 - 15:30"
+  },
   "professorVariants": [
     {
       "professorId": "prof-yousef-ali",
@@ -10,8 +13,5 @@
       "active": true,
       "lecturesFile": "lectures-prof-yousef-ali.json"
     }
-  ],
-  "scheduleDays": {
-    "theory": "الثلاثاء 08:30 - 15:30"
-  }
+  ]
 }
