@@ -8,6 +8,13 @@
           "title": "المحاضرة الأولى صحة عامة",
           "file": "المحاضرة_الأولى_صحة_عامة.pdf",
           "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "صحة عامة_ محاضرات -1-2-3",
+          "file": "mhadrat_1_w_2_w3.pdf",
+          "hidden": false,
+          "requestOrigin": "student-upload"
         }
       ]
     }
