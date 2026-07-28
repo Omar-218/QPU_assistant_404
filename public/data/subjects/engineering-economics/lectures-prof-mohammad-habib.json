@@ -38,6 +38,13 @@
           "title": "اقتصاد_هندسي_7",
           "file": "اقتصاد_هندسي_7.pdf",
           "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "الأسئلة المطلوبة لكويز الاقتصاد الهندسي",
+          "file": "alasela_almtlwba_lkwyz_alaqtsad_alhndsy.pdf",
+          "hidden": false,
+          "requestOrigin": "student-upload"
         }
       ]
     }
