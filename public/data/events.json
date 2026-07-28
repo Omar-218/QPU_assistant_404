@@ -59,6 +59,21 @@
       "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/4",
       "createdAt": "2026-07-28T11:06:58.795Z",
       "decidedAt": "2026-07-28T11:07:14.673Z"
+    },
+    {
+      "id": "evt_1785236994936_f4xi",
+      "subjectId": "engineering-economics",
+      "subjectName": "الاقتصاد الهندسي",
+      "type": "quiz",
+      "typeLabel": "كويز",
+      "title": "اربع محاضرات + أسئلة الكويز المحددة",
+      "date": "2026-08-04",
+      "submittedByLabel": "",
+      "status": "approved",
+      "adminNote": "",
+      "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/5",
+      "createdAt": "2026-07-28T11:09:56.394Z",
+      "decidedAt": "2026-07-28T11:11:52.911Z"
     }
   ]
 }
