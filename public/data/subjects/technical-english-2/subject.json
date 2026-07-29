@@ -3,6 +3,16 @@
   "name": "لغة إنجليزية تخصصية (2)",
   "code": "3210001",
   "hidden": false,
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الاثنين",
+        "start": "08:30",
+        "end": "15:30",
+        "location": "ق 7"
+      }
+    ]
+  },
   "professorVariants": [
     {
       "professorId": "prof-waad-alzoubi",
@@ -10,8 +20,5 @@
       "active": true,
       "lecturesFile": "lectures-prof-waad-alzoubi.json"
     }
-  ],
-  "scheduleDays": {
-    "theory": "الاثنين 08:30 - 15:30 (ق 7)"
-  }
+  ]
 }
