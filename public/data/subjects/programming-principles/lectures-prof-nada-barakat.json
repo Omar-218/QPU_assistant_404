@@ -54,6 +54,18 @@
           "title": "مخططات مساعدة لمحاضرات المبادئ ",
           "file": "مخططات_مساعدة_لمحاضرات_المبادئ.pdf",
           "hidden": false
+        },
+        {
+          "type": "link",
+          "title": "1- شرح المصفوفات للمحاضرة السادسة",
+          "url": "https://youtu.be/ONh1NXW2ZK4?si=HUwJymsWAmsoFmcM",
+          "hidden": false
+        },
+        {
+          "type": "link",
+          "title": "2- شرح المصفوفات للمحاضرة السادسة",
+          "url": "https://youtu.be/-Xfx53vVvR0?si=7Ek9l1s_pXccfKp1",
+          "hidden": false
         }
       ]
     }
