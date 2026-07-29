@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { suggestSlug, suggestProfessorId, isValidSlug } from "../../lib/idSlug.js";
 import { SECTION_LABELS } from "../../lib/sectionLabels.js";
+import {
+  WEEK_DAYS,
+  emptyScheduleEntry,
+  normalizeScheduleList,
+} from "../../lib/scheduleDays.js";
 import { buildSubjectPackage } from "../../lib/githubPublisher.js";
 import SectionsManager from "./SectionsManager.jsx";
 import FileUploaderWidget from "./FileUploaderWidget.jsx";
@@ -67,6 +72,16 @@ export default function SubjectForm({
   // فقط (بلا Markdown/HTML)، بمعزل تام عن أي منطق آخر (نفس نمط سطري
   // theoryProfessorLabel/labProfessorLabel أدناه).
   const [description, setDescription] = useState(initialSubject?.description ?? "");
+  // ⚠️ جديد (ميزة تحكم الآدمن بأوقات المحاضرات): مصفوفتا مواعيد مستقلتان
+  // لكل من نظري/عملي — تدعم أكثر من موعد بالأسبوع لنفس النوع. normalizeScheduleList
+  // تتكفّل بتحويل الشكل النصي القديم (لو موجود بمادة لم تُعدَّل بعد) لصف
+  // مبدئي بدل نموذج فارغ يجبر إعادة الكتابة كاملة.
+  const [theorySchedule, setTheorySchedule] = useState(() =>
+    normalizeScheduleList(initialSubject?.scheduleDays?.theory)
+  );
+  const [labSchedule, setLabSchedule] = useState(() =>
+    normalizeScheduleList(initialSubject?.scheduleDays?.lab)
+  );
   const [slug, setSlug] = useState(initialSubject?.id ?? prefill?.id ?? "");
   // slug من الخطة (prefill.id) مؤكَّد وصحيح أصلاً (نفس id بالخطة الرسمية)، فلا داعي
   // لإعادة اقتراحه تلقائياً من الاسم كما لو كُتب يدوياً.
@@ -112,6 +127,24 @@ export default function SubjectForm({
   const [labProfessorLabel, setLabProfessorLabel] = useState(
     () => initialSubject?.sectionProfessors?.lab ?? ""
   );
+
+  // ⚠️ جديد: دوال مساعدة عامة لإدارة صفوف المواعيد (نظري/عملي) — نفس
+  // المنطق بالضبط لكلا النوعين، فرق واحد فقط: أي setState تُستدعى.
+  function updateScheduleRow(setList, index, patch) {
+    setList((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+  function addScheduleRow(setList) {
+    setList((prev) => [...prev, emptyScheduleEntry()]);
+  }
+  function removeScheduleRow(setList, index) {
+    setList((prev) => prev.filter((_, i) => i !== index));
+  }
+  // صف غير مكتمل (يوم/بداية/نهاية ناقصة أثناء التعبئة) يُستبعد بصمت من
+  // النشرة النهائية بدل رفض الحفظ كاملاً — نفس التسامح المعتمَد بحقول أخرى
+  // اختيارية بهذا النموذج (location اختياري تماماً).
+  function isCompleteScheduleRow(row) {
+    return Boolean(row.day && row.start && row.end);
+  }
 
   const isNewProfessor = multiProfessor && professorChoice === NEW_PROFESSOR_VALUE;
   const effectiveProfessorId = isNewProfessor ? newProfessorId.trim() : professorChoice;
@@ -254,6 +287,10 @@ export default function SubjectForm({
         code,
         hidden,
         description: description.trim(),
+        scheduleDays: {
+          theory: theorySchedule.filter(isCompleteScheduleRow),
+          lab: labSchedule.filter(isCompleteScheduleRow),
+        },
         sectionProfessors: {
           theory: theoryProfessorLabel.trim(),
           lab: labProfessorLabel.trim(),
@@ -295,6 +332,8 @@ export default function SubjectForm({
     setActive,
     theoryProfessorLabel,
     labProfessorLabel,
+    theorySchedule,
+    labSchedule,
     sections,
     initialSubject,
     existingStudyPlan,
@@ -393,6 +432,32 @@ export default function SubjectForm({
               placeholder="مثال: م. عبدو غزالي (يقبل أكثر من اسم بنفس الحقل)"
             />
           </label>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-bg-subtle p-4">
+        <h2 className="mb-1 text-sm font-semibold text-text-h">أوقات المحاضرات (اختياري)</h2>
+        <p className="mb-3 text-xs text-text-muted">
+          يظهر كل موعد كسطر مستقل أعلى صفحة المادة للطالب. يمكن إضافة أكثر من موعد
+          بالأسبوع لنفس النوع (نظري يومَي الأحد والثلاثاء مثلاً) — حقل عرض فقط، لا
+          يتحكم بأي محتوى أو ملف.
+        </p>
+
+        <ScheduleTypeEditor
+          label="مواعيد النظري"
+          rows={theorySchedule}
+          onAdd={() => addScheduleRow(setTheorySchedule)}
+          onChange={(i, patch) => updateScheduleRow(setTheorySchedule, i, patch)}
+          onRemove={(i) => removeScheduleRow(setTheorySchedule, i)}
+        />
+        <div className="mt-4">
+          <ScheduleTypeEditor
+            label="مواعيد العملي"
+            rows={labSchedule}
+            onAdd={() => addScheduleRow(setLabSchedule)}
+            onChange={(i, patch) => updateScheduleRow(setLabSchedule, i, patch)}
+            onRemove={(i) => removeScheduleRow(setLabSchedule, i)}
+          />
         </div>
       </section>
 
@@ -659,6 +724,82 @@ export default function SubjectForm({
         )}
         <PublishPanel pkg={pkg} onPublishSuccess={handlePublishSuccess} />
       </section>
+    </div>
+  );
+}
+
+/** مكوّن فرعي محلي — صف/صفوف مواعيد لنوع واحد (نظري أو عملي). لا حالة داخلية
+ * خاصة به؛ كل الحالة تعيش بـ SubjectForm (theorySchedule/labSchedule) وتُمرَّر
+ * بالكامل عبر props، حتى يبقى مصدر الحقيقة الوحيد بمكان واحد (نفس نمط
+ * extraItems/fileMeta أعلاه بهذا الملف). */
+function ScheduleTypeEditor({ label, rows, onAdd, onChange, onRemove }) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-text">{label}</h3>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="rounded-md border border-border bg-bg px-2 py-1 text-xs text-text hover:bg-bg-elevated"
+        >
+          + إضافة موعد
+        </button>
+      </div>
+
+      {rows.length === 0 ? (
+        <p className="text-xs text-text-muted">لا مواعيد مضافة.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {rows.map((row, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-2 gap-2 rounded-md border border-border bg-bg p-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_minmax(0,1fr)_auto]"
+            >
+              <select
+                value={row.day}
+                onChange={(e) => onChange(i, { day: e.target.value })}
+                className="rounded-md border border-border bg-bg-elevated px-2 py-1 text-sm text-text"
+              >
+                {WEEK_DAYS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="time"
+                value={row.start}
+                onChange={(e) => onChange(i, { start: e.target.value })}
+                className="rounded-md border border-border bg-bg-elevated px-2 py-1 text-sm text-text"
+              />
+
+              <input
+                type="time"
+                value={row.end}
+                onChange={(e) => onChange(i, { end: e.target.value })}
+                className="rounded-md border border-border bg-bg-elevated px-2 py-1 text-sm text-text"
+              />
+
+              <input
+                value={row.location}
+                onChange={(e) => onChange(i, { location: e.target.value })}
+                placeholder="المكان (اختياري) — مثال: ق 7"
+                className="col-span-2 rounded-md border border-border bg-bg-elevated px-2 py-1 text-sm text-text sm:col-span-1"
+              />
+
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                aria-label="حذف الموعد"
+                className="col-span-2 rounded-md border border-danger-border bg-danger-bg px-2 py-1 text-xs text-danger-text hover:opacity-90 sm:col-span-1"
+              >
+                حذف
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

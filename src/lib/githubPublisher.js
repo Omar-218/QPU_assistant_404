@@ -2,7 +2,11 @@
 //
 // عقد هذا الملف (للتوثيق فقط، ينسخه عضو 6 لاحقاً إلى docs/data-schema.md):
 //
-// buildSubjectPackage({ subjectMeta, items }) → pkg
+// buildSubjectPackage({ subjectMeta, items, fileReplacements }) → pkg
+//   fileReplacements?: [{ section, file, newFile }], // ⚠️ جديد: استبدال *محتوى* ملف موجود
+//                                  // مسبقاً بنفس مساره/اسمه حرفياً — لا يغيّر أي حقل بـ
+//                                  // lectures.json (لا العنوان، لا القسم، لا الترتيب). راجع
+//                                  // شرح كامل أعلى تعريف الدالة مباشرة.
 //   subjectMeta: {
 //     id: string,                 // slug نهائي (من lib/idSlug.js، عضو 4)
 //     name: string,               // الاسم العربي
@@ -32,12 +36,17 @@
 //                                  // يُحفَظ كما هو حرفياً بلا معالجة (يدعم أي نص، مثلاً دكتورين
 //                                  // معاً بحقل واحد: "د. أحمد العريفي، م. سليمان محمد").
 //   }
-//     scheduleDays?: { theory?: string, lab?: string }, // ⚠️ جديد: أيام الدوام الأسبوعي —
-//                                  // بنفس نمط sectionProfessors تماماً حرفياً (وصف عرض بحت،
+//     scheduleDays?: { theory?: string|Array<{day,start,end,location?}>,
+//                                  // lab?: string|Array<{day,start,end,location?}> },
+//                                  // ⚠️ محدَّث (ميزة تحكم الآدمن بالمواعيد، طلب إدارة مباشر): كل
+//                                  // مفتاح يقبل إما نصاً حراً قديماً (توافق عكسي مع بيانات لم
+//                                  // تُعدَّل بعد) أو مصفوفة مواعيد هيكلية — تدعم أكثر من موعد
+//                                  // بالأسبوع لنفس النوع (نظري الأحد والثلاثاء مثلاً). كل عنصر
+//                                  // بالمصفوفة: { day: string (من WEEK_DAYS بـ scheduleDays.js
+//                                  // عضو 4), start: "HH:MM", end: "HH:MM", location?: string }.
 //                                  // بمعزل تام عن professorVariants/lecturesFile/sectionProfessors
-//                                  // نفسها). "دوام النظري: السبت / دوام العملي: الأحد" بصفحة
-//                                  // المادة. مصدره جدول دوام رسمي أرسله المستخدم مباشرة، لا
-//                                  // نموذج SubjectForm.jsx بعد (يُضاف يدوياً/بجلسة تحديث دفعة).
+//                                  // نفسها — وصف عرض بحت. مصدره الآن نموذج SubjectForm.jsx مباشرة
+//                                  // (عضو 3) بدل الكتابة اليدوية فقط.
 //     description?: string, // ⚠️ جديد: نبذة/رسالة عن المادة تُعرَض أعلى صفحة
 //                                  // المادة (Subject.jsx)، نص خام فقط (بلا Markdown/HTML —
 //                                  // نفس قيد content بعنصر note). نفس نمط الحفظ التلقائي
@@ -126,9 +135,12 @@
 //   لإقفال PR الطالب الأصلي — الاثنان معاً يكوّنان "الرفض" الكامل.
 
 // استيراد أدوات ASCII slug من عضو 4 — إلزامي لكل من اسم ملف lectures*.json
-// (professorId) وأسماء ملفات المحتوى الفعلية (pdf/image)، حسب خطة إصلاح
-// ASCII §4.7 المحدَّثة، القسم 3 (مهام عضو 5).
-import { transliterateToSlug, isValidSlug } from "./idSlug.js";
+// (professorId) وid المادة، حسب خطة إصلاح ASCII §4.7 المحدَّثة، القسم 3
+// (مهام عضو 5).
+// ⚠️ تحديث (طلب إدارة مباشر): sanitizeFileName أضيفت خصيصاً لأسماء الملفات
+// الفعلية المرفوعة (pdf/image) — بعكس transliterateToSlug، لا تحوّل أي حرف
+// عربي للاتيني. راجع توثيقها بـ idSlug.js لتفاصيل القرار الكامل.
+import { transliterateToSlug, isValidSlug, sanitizeFileName } from "./idSlug.js";
 
 const SECTION_ORDER = ["theory", "lab", "extra", "exam"];
 
@@ -142,19 +154,32 @@ const IMAGE_MIME_TO_EXT = {
   "image/webp": "webp",
 };
 
-/** يحوّل الاسم اللي يكتبه الآدمن إلى اسم ملف فعلي — ASCII إلزامي دائماً
- * (خطة إصلاح ASCII §4.7 المحدَّثة، §3.1: عبر transliterateToSlug عضو 4)،
- * بصرف النظر عن لغة العنوان المعروض. العنوان العربي الأصلي يبقى محفوظاً
- * حرفياً بحقل title بالـ JSON — هذا التحويل يخص اسم الملف على القرص فقط.
+/** يحوّل الاسم اللي يكتبه الآدمن إلى اسم ملف فعلي.
+ * ⚠️ تحديث (طلب إدارة مباشر — إلغاء جزئي لخطة إصلاح ASCII §4.7 القديمة):
+ * اسم الملف الفعلي يطابق الآن الاسم الذي كتبه الآدمن بالضبط — عربي أو
+ * إنجليزي أو مختلط، بلا أي تحويل حروف لاتيني (transliterateToSlug لم تعد
+ * تُستخدَم هنا إطلاقاً، فقط لمعرّفات النظام كـ id المادة). العنوان المعروض
+ * والعنوان الفعلي باسم الملف صارا نفس الشيء حرفياً — هذا هو المطلوب: يظهر
+ * للمستخدم بنفس الاسم الذي اختاره الآدمن + امتداد الملف.
  * يشيل امتداد معروف (pdf/png/jpg/jpeg/webp) لو كتبه الآدمن بنفسه قبل
- * التحويل (تفادي title.pdf.pdf)، ثم يحوّل شرطات transliterateToSlug إلى
- * "_" للحفاظ على نفس نمط التسمية المعتمَد سابقاً بالمشروع
- * ("دارات_نظري_1" بدل "drt-nzry-1"). */
+ * التحويل (تفادي "عنوان.pdf.pdf")، ثم sanitizeFileName (عضو 4) فقط تزيل
+ * المحارف الممنوعة فعلياً بمسارات الملفات — بلا أي تحويل آخر. */
 function sanitizeFileTitle(title) {
   const withoutExt = String(title || "")
     .trim()
     .replace(/\.(pdf|png|jpe?g|webp)$/i, "");
-  return transliterateToSlug(withoutExt).replace(/-/g, "_");
+  return sanitizeFileName(withoutExt);
+}
+
+/** يبني مسار GitHub API آمناً بترميز كل جزء من المسار على حدة (encodeURIComponent)
+ * مع الإبقاء على الشرطات المائلة الفاصلة بين الأجزاء — ضروري الآن بعد أن
+ * صارت أسماء الملفات الفعلية تحتوي عربي/مسافات (راجع sanitizeFileTitle
+ * أعلاه)؛ بدونها fetch() يرسل مسار UTF-8 خام غير صالح بعنوان URL. */
+function encodeGitHubPath(path) {
+  return String(path)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
 }
 
 /** يتحقق أن الرابط يبدأ http:// أو https:// — يُطبَّق هنا إضافة لتحقق واجهة
@@ -165,8 +190,14 @@ function isValidHttpUrl(url) {
 }
 
 /** يبني حزمة الملفات الجاهزة (subject.json, lectures.json, مسارات PDF)
- * من بيانات نموذج المادة + الملفات المرفوعة. */
-export function buildSubjectPackage({ subjectMeta, items = [] }) {
+ * من بيانات نموذج المادة + الملفات المرفوعة.
+ * ⚠️ جديد (ميزة: إدارة الأقسام — استبدال ملف): `fileReplacements` مصفوفة
+ * اختيارية `{ section, file, newFile }` — تستبدل *محتوى* ملف موجود مسبقاً
+ * (pdf/image) بمحتوى جديد، بنفس المسار/الاسم الفعلي تماماً (لا تغيير بالعنوان
+ * المعروض ولا بالقسم ولا بالترتيب — هذا فقط لتبديل المحتوى). `putFile()` أصلاً
+ * يبحث عن sha الملف الحالي بنفسه قبل PUT، فنفس المسار = تحديث تلقائي بلا حاجة
+ * لأي منطق GitHub إضافي؛ العنصر بـ lectures.json نفسه لا يتغيّر إطلاقاً. */
+export function buildSubjectPackage({ subjectMeta, items = [], fileReplacements = [] }) {
   if (!subjectMeta?.id) {
     throw new Error("buildSubjectPackage: subjectMeta.id (slug) مطلوب");
   }
@@ -219,13 +250,27 @@ export function buildSubjectPackage({ subjectMeta, items = [] }) {
   // آخر). أُضيف مباشرة على بيانات المواد الموجودة (لا يمر بالضرورة عبر
   // SubjectForm.jsx بعد — النموذج لا يعرض له حقلاً بعد، فقط الكتابة
   // المباشرة/الجلسات اليدوية تملأه حالياً).
+  // ⚠️ محدَّث (ميزة: تحكم الآدمن بأوقات المحاضرات، طلب إدارة مباشر): scheduleDays
+  // كان نصاً حراً واحداً لكل من theory/lab لا يقبل إلا سطراً واحداً — الآن كل
+  // مفتاح يقبل إما نصاً حراً (الشكل القديم، توافق عكسي كامل مع بيانات موجودة
+  // لم تُعدَّل بعد عبر SubjectForm.jsx) أو مصفوفة مواعيد
+  // `{ day, start, end, location? }` (الشكل الجديد — يدعم أكثر من موعد
+  // بالأسبوع لنفس النوع، مثلاً نظري يومَي الأحد والثلاثاء). نفس نمط الحفظ
+  // التلقائي لـ sectionProfessors أعلاه بلا أي فرق: القيمة الحالية تُحفَظ لو
+  // لم تُمرَّر بهذي النشرة، وتُحذَف فقط بمصفوفة/نص فارغ صراحة.
+  function hasScheduleValue(v) {
+    return Array.isArray(v) ? v.length > 0 : Boolean(v);
+  }
   const incomingScheduleDays = subjectMeta.scheduleDays;
   const prevScheduleDays = subjectMeta.existingSubject?.scheduleDays;
   const nextScheduleDays = incomingScheduleDays !== undefined ? incomingScheduleDays : prevScheduleDays;
-  if (nextScheduleDays && (nextScheduleDays.theory || nextScheduleDays.lab)) {
+  if (
+    nextScheduleDays &&
+    (hasScheduleValue(nextScheduleDays.theory) || hasScheduleValue(nextScheduleDays.lab))
+  ) {
     subjectJson.scheduleDays = {
-      ...(nextScheduleDays.theory ? { theory: nextScheduleDays.theory } : {}),
-      ...(nextScheduleDays.lab ? { lab: nextScheduleDays.lab } : {}),
+      ...(hasScheduleValue(nextScheduleDays.theory) ? { theory: nextScheduleDays.theory } : {}),
+      ...(hasScheduleValue(nextScheduleDays.lab) ? { lab: nextScheduleDays.lab } : {}),
     };
   }
 
@@ -307,7 +352,7 @@ export function buildSubjectPackage({ subjectMeta, items = [] }) {
     let fileName = `${base}.${ext}`;
     let i = 2;
     while (usedNames.has(fileName)) {
-      fileName = `${base}_${i}.${ext}`;
+      fileName = `${base} (${i}).${ext}`;
       i += 1;
     }
     usedNames.add(fileName);
@@ -381,15 +426,55 @@ export function buildSubjectPackage({ subjectMeta, items = [] }) {
     }
   }
 
-  const sections = SECTION_ORDER.filter((k) => sectionsBySection.has(k)).map((k) =>
-    sectionsBySection.get(k)
-  );
-  // أي قسم غير قياسي (احتياط) يُضاف بالنهاية بدل ما يُفقد
+  // ⚠️ إصلاح خلل حرج موثَّق مسبقاً (وتأكَّد فعلياً بالفحص المباشر لهذا الكود، لا
+  // بالاعتماد على أي ادّعاء سابق): الترتيب اليدوي لم يكن يُحفَظ إطلاقاً — الكود
+  // القديم هنا كان يفرض SECTION_ORDER الثابت دائماً بصرف النظر عن ترتيب
+  // existingSections الفعلي، فأي إعادة ترتيب يفعلها الآدمن عبر ▲/▼ بـ
+  // SectionsManager.jsx كانت تُمحى صامتاً عند أول نشر لاحق (كانت المعاينة فقط
+  // تتغيّر، لا المنشور فعلياً). الإصلاح: `sectionsBySection` (Map) يحافظ أصلاً
+  // على ترتيب إدراجه (ترتيب existingSections الممرَّر من الآدمن)، فنستخدم هذا
+  // الترتيب حرفياً بدل إعادة فرزه — SECTION_ORDER يبقى فقط كافتراضي معقول لمادة
+  // جديدة كلياً (لا existingSections بعد)، لا كقاعدة صارمة تُطبَّق دائماً.
+  const sections =
+    existingSections.length > 0
+      ? Array.from(sectionsBySection.values())
+      : SECTION_ORDER.filter((k) => sectionsBySection.has(k)).map((k) => sectionsBySection.get(k));
+  // أي قسم غير قياسي (احتياط)، أو أي قسم جديد ظهر لأول مرة بمادة جديدة كلياً،
+  // يُضاف بالنهاية بدل ما يُفقد.
   for (const [key, val] of sectionsBySection) {
-    if (!SECTION_ORDER.includes(key)) sections.push(val);
+    if (!sections.includes(val)) sections.push(val);
   }
 
   const lecturesJson = { sections };
+
+  // ⚠️ جديد (ميزة: إدارة الأقسام — استبدال ملف). نبحث عن العنصر الأصلي فقط
+  // للتحقق من نوعه (pdf/image) قبل قبول الاستبدال — لا نغيّر أي حقل بالعنصر
+  // نفسه، فقط نضيف الملف الجديد لقائمة الرفع بنفس المسار القديم حرفياً.
+  for (const rep of fileReplacements) {
+    const section = sectionsBySection.get(rep.section);
+    const originalItem = section?.items.find((it) => it.file === rep.file);
+    if (!originalItem) {
+      throw new Error(
+        `buildSubjectPackage: تعذّر إيجاد الملف الأصلي "${rep.file}" بقسم "${rep.section}" للاستبدال`
+      );
+    }
+    if (!FILE_BACKED_TYPES.has(originalItem.type)) {
+      throw new Error(
+        `buildSubjectPackage: العنصر "${rep.file}" ليس ملفاً قابلاً للاستبدال (نوعه "${originalItem.type}")`
+      );
+    }
+    if (originalItem.type === "pdf" && rep.newFile?.type !== "application/pdf") {
+      throw new Error(`buildSubjectPackage: الملف البديل لـ "${rep.file}" يجب أن يكون PDF`);
+    }
+    if (originalItem.type === "image" && !rep.newFile?.type?.startsWith("image/")) {
+      throw new Error(`buildSubjectPackage: الملف البديل لـ "${rep.file}" يجب أن يكون صورة`);
+    }
+    pdfFiles.push({
+      path: `public/pdf/${slug}/${rep.file}`,
+      file: rep.newFile,
+      name: rep.file,
+    });
+  }
 
   // --- تحديث public/data/study-plan.json (إصلاح تقرير عضو 6، 2026-07-19) ---
   // النشر كان يكتب subject.json/lectures.json فقط، وما كان يلمس study-plan.json
@@ -607,7 +692,7 @@ function textToBase64(text) {
 
 async function getExistingSha({ owner, repo, path, ref, token }) {
   const res = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(path)}?ref=${encodeURIComponent(ref)}`,
     { headers: ghHeaders(token) }
   );
   if (res.status === 404) return null;
@@ -620,7 +705,7 @@ async function putFile({ owner, repo, path, branch, token, message, base64Conten
   const sha = await getExistingSha({ owner, repo, path, ref: branch === undefined ? "main" : branch, token }).catch(
     () => null
   );
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(path)}`, {
     method: "PUT",
     headers: { ...ghHeaders(token), "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -643,7 +728,7 @@ async function putFile({ owner, repo, path, branch, token, message, base64Conten
 async function deleteFileIfExists({ owner, repo, path, branch, token, message }) {
   const sha = await getExistingSha({ owner, repo, path, ref: branch, token });
   if (!sha) return;
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(path)}`, {
     method: "DELETE",
     headers: { ...ghHeaders(token), "Content-Type": "application/json" },
     body: JSON.stringify({ message, sha, branch }),
@@ -658,7 +743,7 @@ async function deleteFileIfExists({ owner, repo, path, branch, token, message })
  * لأن GitHub لا يوفّر endpoint يحذف مجلداً دفعة واحدة (قرار/ملاحظة المدير، جلسة 4). */
 async function listDirectory({ owner, repo, path, ref, token }) {
   const res = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(path)}?ref=${encodeURIComponent(ref)}`,
     { headers: ghHeaders(token) }
   );
   if (res.status === 404) return []; // المجلد غير موجود أصلاً (مادة بلا ملفات مرفوعة قط)

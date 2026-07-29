@@ -25,10 +25,10 @@ export default function LectureItem({ item, isOpen, onToggle, src }) {
           href={item.url}
           target="_blank"
           rel="noreferrer"
-          className="flex w-full items-center justify-between rounded-md border border-border bg-bg-subtle px-3 py-2 text-sm text-text transition-colors hover:bg-bg-elevated"
+          className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-bg-subtle px-3 py-2 text-sm text-text transition-colors hover:bg-bg-elevated"
         >
-          <span>{item.title}</span>
-          <span className="text-text-muted">↗</span>
+          <span className="min-w-0 break-words">{item.title}</span>
+          <span className="shrink-0 text-text-muted">↗</span>
         </a>
       </li>
     );
@@ -40,18 +40,18 @@ export default function LectureItem({ item, isOpen, onToggle, src }) {
         <button
           type="button"
           onClick={() => setNoteOpen((prev) => !prev)}
-          className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+          className={`flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
             noteOpen
               ? "border-accent bg-bg-elevated text-text-h"
               : "border-border bg-bg-subtle text-text hover:bg-bg-elevated"
           }`}
         >
-          <span>{item.title}</span>
-          <span className="text-text-muted">{noteOpen ? "▲" : "▼"}</span>
+          <span className="min-w-0 break-words">{item.title}</span>
+          <span className="shrink-0 text-text-muted">{noteOpen ? "▲" : "▼"}</span>
         </button>
         {noteOpen && (
           <div
-            className="mt-2 rounded-md border border-border bg-bg-subtle px-3 py-2 text-sm text-text"
+            className="mt-2 break-words rounded-md border border-border bg-bg-subtle px-3 py-2 text-sm text-text"
             style={{ whiteSpace: "pre-wrap" }}
           >
             {item.content}
@@ -67,14 +67,14 @@ export default function LectureItem({ item, isOpen, onToggle, src }) {
       <button
         type="button"
         onClick={onToggle}
-        className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+        className={`flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
           isOpen
             ? "border-accent bg-bg-elevated text-text-h"
             : "border-border bg-bg-subtle text-text hover:bg-bg-elevated"
         }`}
       >
-        <span>{item.title}</span>
-        <span className="text-text-muted">{isOpen ? "▲" : "▼"}</span>
+        <span className="min-w-0 break-words">{item.title}</span>
+        <span className="shrink-0 text-text-muted">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {isOpen && src && (

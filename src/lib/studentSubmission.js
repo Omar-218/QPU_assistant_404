@@ -35,7 +35,7 @@
 //   وحتى بعد القبول لن يظهر إلا بعد إضافة عنصر يشير له بـ lectures*.json
 //   (تفعله buildUploadDecision بتوكن الأدمن — راجع githubPublisher.js).
 
-import { transliterateToSlug } from "./idSlug.js";
+import { transliterateToSlug, sanitizeFileName } from "./idSlug.js";
 
 // خطة الدفعة 5 §0.1: يُقرأ من متغير بيئة وقت البناء فقط — لا قيمة افتراضية
 // مكتوبة هنا. صلاحياته المطلوبة حصراً: Contents: Write + Pull requests:
@@ -70,11 +70,23 @@ async function fileToBase64(file) {
   return btoa(binary);
 }
 
-/** نفس نمط sanitizeFileTitle بـ githubPublisher.js (ASCII slug إلزامي —
- * خطة إصلاح ASCII §4.7)، مكرَّر هنا محلياً بدل استيراده حفاظاً على العزل. */
-function sanitizeName(text) {
+/** لأسماء الفروع/refs فقط — لازم ASCII (git ref لا يقبل كل يونيكود بأمان
+ * بكل الأدوات). لا علاقة لها باسم الملف الفعلي المرفوع (راجع sanitizeFileName
+ * المستورَدة من idSlug.js أدناه لتلك الحالة — تحديث بطلب إدارة مباشر: اسم
+ * الملف الفعلي يطابق الآن ما يكتبه الطالب/الآدمن بالضبط، بلا تحويل لاتيني). */
+function sanitizeBranchSlug(text) {
   const withoutExt = String(text || "").trim().replace(/\.pdf$/i, "");
   return transliterateToSlug(withoutExt).replace(/-/g, "_");
+}
+
+/** يبني مسار GitHub API آمناً بترميز كل جزء على حدة — نفس السبب بالضبط
+ * الموثَّق بـ githubPublisher.js (عضو 5): أسماء الملفات صارت تحتوي عربي/
+ * مسافات فعلياً الآن، ومسار fetch() الخام لا يقبلها بدون ترميز. */
+function encodeGitHubPath(path) {
+  return String(path)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
 }
 
 function makeId(prefix) {
@@ -109,11 +121,14 @@ async function createRequestBranch(branchName) {
 }
 
 async function putRequestFile(path, branch, message, base64Content) {
-  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`, {
-    method: "PUT",
-    headers: { ...ghHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ message, content: base64Content, branch }),
-  });
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeGitHubPath(path)}`,
+    {
+      method: "PUT",
+      headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ message, content: base64Content, branch }),
+    }
+  );
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`فشل رفع ${path}: ${res.status} ${body}`);
@@ -155,7 +170,7 @@ export async function submitEventRequest({
   }
 
   const id = makeId("evt");
-  const slug = sanitizeName(subjectId) || subjectId;
+  const slug = sanitizeBranchSlug(subjectId) || subjectId;
   const branch = `event-request/${slug}-${Date.now()}`;
   await createRequestBranch(branch);
 
@@ -204,11 +219,16 @@ export async function submitUploadRequest({
   }
 
   const id = makeId("upl");
-  const slug = sanitizeName(subjectId) || subjectId;
+  const slug = sanitizeBranchSlug(subjectId) || subjectId;
   const branch = `upload-request/${slug}-${Date.now()}`;
   await createRequestBranch(branch);
 
-  const baseName = sanitizeName(requestedTitle) || sanitizeName(file.name) || "file";
+  // ⚠️ تحديث (طلب إدارة مباشر): اسم الملف الفعلي يطابق العنوان الذي كتبه
+  // الطالب بالضبط (بلا تحويل لاتيني) — نفس القرار المطبَّق بـ githubPublisher.js
+  // (عضو 5). نشيل امتداد .pdf لو الطالب كتبه بنفسه بالعنوان لتفادي "عنوان.pdf.pdf".
+  const titleWithoutExt = String(requestedTitle || "").trim().replace(/\.pdf$/i, "");
+  const fallbackWithoutExt = String(file.name || "").trim().replace(/\.pdf$/i, "");
+  const baseName = sanitizeFileName(titleWithoutExt) || sanitizeFileName(fallbackWithoutExt) || "file";
   const fileName = `${baseName}.pdf`;
   const filePath = `public/pdf/${subjectId}/${fileName}`;
   const base64Content = await fileToBase64(file);

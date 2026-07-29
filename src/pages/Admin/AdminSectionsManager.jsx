@@ -5,14 +5,19 @@ import { buildSubjectPackage } from "../../lib/githubPublisher.js";
 
 // ⚠️ ملف مملوك لعضو 3 — إدارة الأقسام (القسم 4.5: مستوى "القسم" من حقل hidden).
 // ملاحظة: SECTION_LABELS نفسه ملف نهائي جاهز (القسم 4.4) ولا يُعدَّل هنا —
-// هذه الصفحة فقط تدير أي الأقسام ظاهرة/مخفية وترتيبها لكل مادة.
+// هذه الصفحة فقط تدير أي الأقسام ظاهرة/مخفية وترتيبها، ترتيب/نقل عناصرها،
+// واستبدال الملف الفعلي وراء أي عنصر pdf/image — لكل مادة.
 //
-// ملاحظة تكامل (بانتظار تأكيد عضو 5/المدير): buildSubjectPackage() يعيد بناء
-// lecturesJson بترتيب أقسام ثابت دائماً (SECTION_ORDER بالكود)، بصرف النظر عن
-// ترتيب sections الممرَّر بـ existingLectures. أي: تعديل الإخفاء/العنوان/الحذف
-// هنا يُنشَر فعلياً، لكن زري "أعلى/أسفل" بـ SectionsManager لإعادة الترتيب لن
-// يظهر أثرهما بالحزمة المنشورة فعلياً — قيد معروف بتطبيق عضو 5 الحالي، ذكرته
-// بسجلي (member-3-log.md) للمراجعة.
+// ⚠️ إصلاح خلل حرج (تأكَّد بالفحص المباشر لـ githubPublisher.js، لا افتراضاً):
+// إعادة ترتيب الأقسام (▲/▼) كانت تُمحى صامتاً عند النشر — buildSubjectPackage
+// كان يفرض SECTION_ORDER الثابت دائماً بصرف النظر عن ترتيب existingLectures
+// الفعلي الممرَّر من هنا. أُصلِح جذرياً بـ githubPublisher.js نفسه (عضو 5) —
+// الترتيب اليدوي يُحفَظ فعلياً بالنشر الآن، لا معاينة فقط.
+//
+// ⚠️ جديد: استبدال ملف — لا يُخزَّن كـ state ضمن `sections` (الملف الفعلي
+// ليس جزءاً من JSON قابل للتسلسل بأمان)، بل بخريطة منفصلة `replacements`
+// (مفتاح `${section}::${file}` → File)، تُمرَّر لـ buildSubjectPackage عبر
+// معامل `fileReplacements` مستقل تماماً عن `items`/`existingLectures`.
 //
 // ⚠️ إصلاح (تقرير عضو 6 — نفس السبب الجذري الموثَّق بـ AdminSubjectEditor.jsx):
 // `studyPlan`/`subjectDetail`/`sections` هنا كلها أساس كتابة (existingStudyPlan/
@@ -50,6 +55,14 @@ export default function AdminSectionsManager() {
   const [activeVariant, setActiveVariant] = useState(null); // كائن professorVariants الحالي أو null
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
+  // ⚠️ جديد: خريطة استبدالات الملفات المعلَّقة (لم تُنشَر بعد) — مفتاح
+  // `${section}::${file}` → File. تُصفَّر عند تغيير المادة/الدكتور النشِط حتى
+  // لا يُعاد استخدام ملف اختير لمادة/شعبة مختلفة بالغلط.
+  const [replacements, setReplacements] = useState({});
+
+  function handleReplaceFile(sectionKey, fileName, file) {
+    setReplacements((prev) => ({ ...prev, [`${sectionKey}::${fileName}`]: file }));
+  }
 
   useEffect(() => {
     fetchStudyPlan().then(setStudyPlan);
@@ -60,6 +73,7 @@ export default function AdminSectionsManager() {
       setSubjectDetail(null);
       setSections([]);
       setActiveVariant(null);
+      setReplacements({});
       return;
     }
     let cancelled = false;
@@ -92,6 +106,7 @@ export default function AdminSectionsManager() {
     const lecturesData = await fetchLectures(selectedId, filename);
     setActiveVariant(variant);
     setSections(lecturesData.sections ?? []);
+    setReplacements({});
     setLoading(false);
   }
 
@@ -116,7 +131,13 @@ export default function AdminSectionsManager() {
           existingLectures: { sections },
           existingStudyPlan: studyPlan,
         },
-        files: [],
+        items: [],
+        // ⚠️ جديد: تحويل خريطة الاستبدالات المعلَّقة لمصفوفة العقد المتوقَّعة
+        // بـ buildSubjectPackage (عضو 5) — { section, file, newFile }.
+        fileReplacements: Object.entries(replacements).map(([key, newFile]) => {
+          const [section, file] = key.split("::");
+          return { section, file, newFile };
+        }),
       });
     } catch (err) {
       pkg = null;
@@ -170,10 +191,15 @@ export default function AdminSectionsManager() {
         <>
           <div className="rounded-lg border border-border bg-bg-subtle p-4">
             <p className="mb-3 text-xs text-text-muted">
-              ملاحظة: إعادة ترتيب الأقسام (▲/▼) للمعاينة فقط حالياً — الترتيب المنشور فعلياً
-              ثابت (نظري ← عملي ← إضافي ← أسئلة) بحسب تطبيق عضو 5 الحالي.
+              التغييرات هنا (الإخفاء/العنوان/الترتيب/النقل بين الأقسام/استبدال الملف) لا تُطبَّق
+              فعلياً إلا بعد الضغط على "نشر" بالأسفل.
             </p>
-            <SectionsManager sections={sections} onChange={setSections} />
+            <SectionsManager
+              sections={sections}
+              onChange={setSections}
+              onReplaceFile={handleReplaceFile}
+              pendingReplacements={replacements}
+            />
           </div>
           <div className="rounded-lg border border-border bg-bg-subtle p-4">
             <PublishPanel pkg={pkg} />

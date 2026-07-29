@@ -5,6 +5,7 @@ import { useEvents } from "../hooks/useEvents.js";
 import { isEventActive } from "../lib/eventStatus.js";
 import { SECTION_LABELS } from "../lib/sectionLabels.js";
 import { useRecentlyViewed } from "../hooks/useRecentlyViewed.js";
+import { normalizeScheduleList, formatScheduleEntry } from "../lib/scheduleDays.js";
 import LectureItem from "../components/subject/LectureItem.jsx";
 import EventRequestForm from "../components/subject/EventRequestForm.jsx";
 import UploadRequestForm from "../components/subject/UploadRequestForm.jsx";
@@ -73,7 +74,7 @@ export default function Subject() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-text-h">{subject.name}</h1>
+      <h1 className="break-words text-xl font-bold text-text-h">{subject.name}</h1>
       {subject.code && <p className="text-xs text-text-muted">{subject.code}</p>}
       {subject.sectionProfessors?.theory || subject.sectionProfessors?.lab ? (
         <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-text-muted">
@@ -87,21 +88,36 @@ export default function Subject() {
           </p>
         )
       )}
-      {/* ⚠️ جديد: أيام الدوام الأسبوعي — حقل عرض مستقل تماماً (scheduleDays)،
-          بنفس نمط sectionProfessors تماماً (theory?/lab? اختياريان)، بلا أي
-          علاقة بمنطق professorVariants/lecturesFile. */}
-      {(subject.scheduleDays?.theory || subject.scheduleDays?.lab) && (
-        <div className="mt-0.5 flex flex-wrap gap-x-4 text-xs text-text-muted">
-          {subject.scheduleDays.theory && <span>دوام النظري: {subject.scheduleDays.theory}</span>}
-          {subject.scheduleDays.lab && <span>دوام العملي: {subject.scheduleDays.lab}</span>}
-        </div>
-      )}
+      {/* ⚠️ محدَّث: أيام الدوام الأسبوعي — حقل عرض مستقل تماماً (scheduleDays)،
+          بمعزل تام عن منطق professorVariants/lecturesFile. صار يدعم أكثر من
+          موعد بالأسبوع لنفس النوع (نظري الأحد والثلاثاء مثلاً) — كل موعد
+          سطر مستقل. normalizeScheduleList يتعامل تلقائياً مع الشكل النصي
+          القديم لأي مادة لم تُعدَّل بعد عبر النموذج (توافق عكسي كامل). */}
+      {(() => {
+        const theoryEntries = normalizeScheduleList(subject.scheduleDays?.theory);
+        const labEntries = normalizeScheduleList(subject.scheduleDays?.lab);
+        if (theoryEntries.length === 0 && labEntries.length === 0) return null;
+        return (
+          <div className="mt-0.5 flex flex-col gap-0.5 text-xs text-text-muted">
+            {theoryEntries.map((entry, i) => (
+              <span key={`theory-${i}`} className="break-words">
+                دوام النظري: {formatScheduleEntry(entry)}
+              </span>
+            ))}
+            {labEntries.map((entry, i) => (
+              <span key={`lab-${i}`} className="break-words">
+                دوام العملي: {formatScheduleEntry(entry)}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* ⚠️ جديد: نبذة/رسالة عن المادة (description) — نص خام فقط، بلا Markdown/HTML
           (نفس عرض عنصر note بـ LectureItem.jsx: white-space: pre-wrap). حقل عرض
           مستقل تماماً، بلا أي علاقة بـ professorVariants/sections. */}
       {subject.description && (
-        <div className="mt-3 whitespace-pre-wrap rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm text-text">
+        <div className="mt-3 whitespace-pre-wrap break-words rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm text-text">
           {subject.description}
         </div>
       )}
