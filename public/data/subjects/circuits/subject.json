@@ -7,6 +7,24 @@
     "theory": "د. أحمد العريفي",
     "lab": "د. أحمد العريفي، م. سليمان محمد"
   },
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الأحد",
+        "start": "08:30",
+        "end": "11:55",
+        "location": "مخبر دارات"
+      }
+    ],
+    "lab": [
+      {
+        "day": "الأحد",
+        "start": "12:50",
+        "end": "15:30",
+        "location": "مخبر دارات"
+      }
+    ]
+  },
   "professorVariants": [
     {
       "professorId": "prof-ahmad",
@@ -14,9 +32,5 @@
       "active": true,
       "lecturesFile": "lectures-prof-ahmad.json"
     }
-  ],
-  "scheduleDays": {
-    "theory": "الأحد 08:30 - 11:55 (مخبر دارات)",
-    "lab": "الأحد 12:50 - 15:30 (مخبر دارات)"
-  }
+  ]
 }
