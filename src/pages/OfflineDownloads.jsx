@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useOfflineFiles } from "../hooks/useOfflineFiles.js";
+import { formatFileSize } from "../lib/formatFileSize.js";
 
 // ⚠️ ملف جديد — مهمة المدير (ميزة "تصفح المواد بدون إنترنت"، طلب مباشر من
 // المستخدم، 2026-07-30). صفحة عامة (لا حسابات طلاب، نفس افتراض NotificationsPage.jsx)
@@ -13,11 +14,11 @@ import { useOfflineFiles } from "../hooks/useOfflineFiles.js";
 // رابط بالشريط الجانبي (Sidebar.jsx، مسؤولية المدير) — قسم دائم الظهور، لا
 // يختفي عند الفراغ (بخلاف FavoritesSection) لأنه صفحة ميزة أساسية، لا تخصيص.
 
-function formatSize(bytes) {
-  if (!bytes && bytes !== 0) return "";
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} كيلوبايت`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} ميغابايت`;
-}
+// ⚠️ 2026-07-30: formatSize كانت مُعرَّفة هنا محلياً — انتقلت لـ
+// src/lib/formatFileSize.js (formatFileSize) لتُستخدم أيضاً بـ LectureItem.jsx
+// بلا تكرار. الاسم المحلي أدناه أُبقي كـ alias فقط لتفادي تعديل كل الاستدعاءات
+// أسفل هذا الملف بلا داعٍ.
+const formatSize = formatFileSize;
 
 export default function OfflineDownloads() {
   const { loading, openOffline, removeOffline, groupedBySubject, files } = useOfflineFiles();

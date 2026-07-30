@@ -14,7 +14,8 @@ import {
 //     files,            // بيانات وصفية فقط (بلا Blob) — كل الملفات المحفوظة، أحدثها أولاً
 //     loading,
 //     isDownloaded(fileId),      // بحث مباشر بالذاكرة، بلا استعلام IndexedDB إضافي
-//     downloadFile(meta, src),   // meta: { fileId, subjectId, subjectName, sectionLabel, title, fileName, mimeType }
+//     downloadFile(meta, src, onProgress?),  // meta: { fileId, subjectId, subjectName, sectionLabel, title, fileName, mimeType }
+//                                             // onProgress?(loadedBytes, totalBytes) — راجع تعليق downloadFile أسفل الملف
 //     openOffline(fileId),       // يفتح النسخة المحفوظة بتبويب جديد (يعمل بدون نت)
 //     removeOffline(fileId),
 //     groupedBySubject(),        // { [subjectId]: { subjectName, files: [...] } }
@@ -55,10 +56,41 @@ export function useOfflineFiles() {
 
   // يجلب الملف من الشبكة ويخزّنه محلياً. يرمي استثناءً عند فشل الشبكة —
   // المستدعي (LectureItem.jsx) مسؤول عن عرض رسالة خطأ مناسبة.
-  const downloadFile = useCallback(async (meta, src) => {
+  //
+  // ⚠️ تحديث (2026-07-30، طلب مباشر من المستخدم — ميزة "حجم الملف وتقدّم
+  // التنزيل"): onProgress اختياري: `(loadedBytes, totalBytes) => void`،
+  // يُستدعى مع كل دفعة (chunk) أثناء القراءة، لا مرة واحدة بالنهاية فقط.
+  // totalBytes من رأس Content-Length لرد الشبكة — قد يكون 0 لو الخادم لا
+  // يرسله (نادر بملفات ثابتة على GitHub Pages)؛ المستدعي يتعامل مع 0 كـ
+  // "الحجم الكلي غير معروف" بدل قسمة على صفر.
+  // بديل خطة ب: لو المتصفح لا يدعم ReadableStream على body (نادر جداً
+  // اليوم)، نرجع لـ res.blob() المباشرة بلا أي تتبع تقدّم تدريجي — الملف
+  // يُحفظ بنجاح بكل الأحوال، فقط بلا شريط تقدّم حي.
+  const downloadFile = useCallback(async (meta, src, onProgress) => {
     const res = await fetch(src);
     if (!res.ok) throw new Error("fetch-failed");
-    const blob = await res.blob();
+    const totalBytes = Number(res.headers.get("content-length")) || 0;
+
+    if (!res.body || typeof res.body.getReader !== "function") {
+      const blob = await res.blob();
+      onProgress?.(blob.size, totalBytes || blob.size);
+      await saveOfflineFile(meta, blob);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.length;
+      onProgress?.(loaded, totalBytes);
+    }
+    const blob = new Blob(chunks, {
+      type: meta.mimeType || res.headers.get("content-type") || undefined,
+    });
     await saveOfflineFile(meta, blob);
   }, []);
 

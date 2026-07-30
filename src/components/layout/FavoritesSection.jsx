@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useStudyPlan } from "../../hooks/useStudyPlan.js";
 import { useFavorites } from "../../hooks/useFavorites.js";
 import { useEvents } from "../../hooks/useEvents.js";
 import { useNotifySubscriptions } from "../../hooks/useNotifySubscriptions.js";
 import { isEventActive } from "../../lib/eventStatus.js";
+import { prefetchFavoriteSubjectsOffline } from "../../lib/offlineSubjectPrefetch.js";
 
 // ⚠️ ملف مملوك لعضو 2 — الدفعة 4 (المهمة 4)
 // قسم "المفضلة" بالشريط الجانبي. المدير يستورده يدوياً بـ Sidebar.jsx
@@ -27,6 +28,19 @@ export default function FavoritesSection() {
   const { favorites } = useFavorites();
   const { events } = useEvents();
   const { isSubscribed, toggleSubscribed } = useNotifySubscriptions();
+
+  // ⚠️ جديد (2026-07-30، طلب مباشر من المستخدم): يخزّن صفحات كل المواد
+  // المفضّلة (subject.json + ملف المحاضرات النشِط) بكاش sw.js بصمت — يغطي
+  // حالتين معاً: المواد المفضّلة أصلاً من قبل (عند تحميل هذا المكوّن أول
+  // مرة)، والمواد المضافة/المحذوفة من المفضلة حديثاً (favorites يتغيّر).
+  // لا علاقة له بتنزيل ملفات pdf/image الفعلية — ذاك اختياري بالكامل ويبقى
+  // من مسؤولية LectureItem.jsx/useOfflineFiles.js فقط. راجع
+  // src/lib/offlineSubjectPrefetch.js للتفاصيل والتعليل الكامل.
+  useEffect(() => {
+    if (favorites.length > 0) {
+      prefetchFavoriteSubjectsOffline(favorites);
+    }
+  }, [favorites]);
 
   if (loading) return null;
 

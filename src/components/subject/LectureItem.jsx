@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useOfflineFiles } from "../../hooks/useOfflineFiles.js";
 import { guessMimeType } from "../../lib/offlineFiles.js";
+import { formatFileSize } from "../../lib/formatFileSize.js";
 
 // ⚠️ ملف مملوك لعضو 2 — عنصر واحد ضمن قسم بصفحة المادة (Subject.jsx).
 // يتفرّع بالعرض حسب item.type (عقد عضو 3/5 — التوزيع الجديد):
@@ -29,6 +30,20 @@ import { guessMimeType } from "../../lib/offlineFiles.js";
 // محفوظ محلياً — هذا هو "العلامة بصفحة المادة نفسها" المطلوبة.
 // بلا props الجديدة (استخدام مستقبلي محتمل خارج Subject.jsx): يعمل تماماً
 // كالسابق (تنزيل مباشر بلا تخزين محلي) — توافق عكسي كامل.
+//
+// ⚠️ تحديث ثانٍ (2026-07-30، طلب مباشر من المستخدم — نفس الجلسة):
+//   1) "↗ فتح بتبويب جديد": لو الملف محمّل محلياً، الزر يفتح النسخة
+//      المحفوظة فعلياً (openOffline من useOfflineFiles.js) بدل رابط الشبكة —
+//      يعمل بلا اتصال تماماً، تماماً كما لو فُتح من صفحة "المواد بدون
+//      إنترنت" (OfflineDownloads.jsx). لو تعذّر (حالة نادرة: حُذف من تبويب
+//      آخر)، نرجع لرابط الشبكة كخطة بديلة بدل كسر الزر بصمت.
+//   2) حجم الملف: لو محمّل مسبقاً نعرض حجمه الفعلي المخزَّن (sizeBytes من
+//      IndexedDB، بلا أي طلب شبكة إضافي). لو غير محمّل بعد، طلب HEAD صامت
+//      (عند فتح العنصر فقط) يقرأ رأس Content-Length ليُعرض "حجم الملف: ..."
+//      قبل الضغط على تنزيل — يفشل بصمت بلا اتصال أو لو الخادم لا يرسل الرأس.
+//   3) تقدّم التنزيل: أثناء "جارِ التنزيل"، شريط تقدّم + نص "تم تحميل X من Y"
+//      يتحدّث حياً من onProgress الجديد بـ useOfflineFiles.downloadFile —
+//      راجع ذاك الملف للتفصيل الكامل لآلية القراءة التدريجية (stream reader).
 
 export default function LectureItem({
   item,
@@ -43,11 +58,39 @@ export default function LectureItem({
   const type = item.type || "pdf";
   const [noteOpen, setNoteOpen] = useState(false);
   const offlineEnabled = Boolean(fileId && subjectId);
-  const { isDownloaded, downloadFile, openOffline } = useOfflineFiles();
+  const { isDownloaded, downloadFile, openOffline, files } = useOfflineFiles();
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const downloaded = offlineEnabled && isDownloaded(fileId);
+  // سجل الملف المحمّل كاملاً (يشمل sizeBytes الفعلي) — بلا أي طلب شبكة إضافي،
+  // هذي نفس القائمة اللي useOfflineFiles يحمّلها أصلاً من IndexedDB.
+  const downloadedMeta = downloaded ? files.find((f) => f.fileId === fileId) : null;
+
+  // الحجم قبل التنزيل: طلب HEAD صامت (مرة واحدة فقط، عند فتح العنصر ولو لم
+  // يُحمَّل الملف بعد) يقرأ رأس Content-Length. يفشل بصمت بدون اتصال أو لو
+  // الخادم لا يرسل الرأس — لا يظهر أي خطأ للمستخدم، فقط لا يظهر الحجم.
+  const [remoteSize, setRemoteSize] = useState(null);
+  useEffect(() => {
+    if (!isOpen || downloaded || !src) return;
+    let cancelled = false;
+    setRemoteSize(null);
+    fetch(src, { method: "HEAD" })
+      .then((res) => {
+        if (cancelled || !res.ok) return;
+        const len = res.headers.get("content-length");
+        if (len) setRemoteSize(Number(len));
+      })
+      .catch(() => {
+        // بلا اتصال أو الخادم يرفض HEAD — نتجاهل، الحجم يبقى غير معروف فقط.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, downloaded, src]);
+
+  // تقدّم التنزيل الحي — { loaded, total } بالبايت، أو null قبل/بعد التنزيل.
+  const [progress, setProgress] = useState(null);
 
   async function handleNetworkDownload() {
     // تنزيل عادي عبر رابط مؤقت — نفس السلوك القديم بالضبط، مستخدَم أيضاً
@@ -67,6 +110,7 @@ export default function LectureItem({
       return;
     }
     setBusy(true);
+    setProgress({ loaded: 0, total: remoteSize || 0 });
     try {
       await downloadFile(
         {
@@ -78,7 +122,8 @@ export default function LectureItem({
           fileName: item.file,
           mimeType: guessMimeType(item.file),
         },
-        src
+        src,
+        (loaded, total) => setProgress({ loaded, total: total || remoteSize || 0 })
       );
       handleNetworkDownload();
       setConfirmOpen(false);
@@ -86,6 +131,7 @@ export default function LectureItem({
       setErrorMsg("تعذّر تنزيل الملف — تحقق من اتصالك بالإنترنت وحاول مجدداً");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -102,6 +148,18 @@ export default function LectureItem({
     } else {
       handleFreshDownload();
     }
+  }
+
+  // ⚠️ جديد: "فتح بتبويب جديد" يفتح النسخة المحلية مباشرة لو الملف محمّل —
+  // بالضبط نفس ما يحدث لو المستخدم فتحه من صفحة "المواد بدون إنترنت". لو
+  // تعذّر (نادر: حُذف من تبويب آخر بالتزامن)، نرجع لرابط الشبكة كخطة بديلة
+  // بدل ترك الزر بلا أي أثر.
+  async function handleOpenInTab() {
+    if (downloaded) {
+      const ok = await openOffline(fileId);
+      if (ok) return;
+    }
+    window.open(src, "_blank", "noopener,noreferrer");
   }
 
   if (type === "link") {
@@ -166,7 +224,7 @@ export default function LectureItem({
               className="shrink-0 rounded border border-warning-border bg-warning-bg px-1.5 py-0.5 text-[11px] leading-none text-warning-text"
               title="محفوظة للتصفح بدون إنترنت"
             >
-              📥 محمّلة
+              📥 محمّلة{downloadedMeta?.sizeBytes ? ` (${formatFileSize(downloadedMeta.sizeBytes)})` : ""}
             </span>
           )}
         </span>
@@ -175,6 +233,12 @@ export default function LectureItem({
 
       {isOpen && src && (
         <div className="mt-2 flex flex-col gap-2">
+          {/* حجم الملف قبل التنزيل — يظهر فقط لو HEAD نجح ولم يُحمَّل الملف
+              بعد (بعد التنزيل، الحجم الفعلي يظهر بالشارة أعلى بدلاً منه). */}
+          {!downloaded && remoteSize != null && !busy && (
+            <p className="text-xs text-text-muted">حجم الملف: {formatFileSize(remoteSize)}</p>
+          )}
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -184,15 +248,35 @@ export default function LectureItem({
             >
               {busy ? "...جارِ التنزيل" : "⭳ تنزيل"}
             </button>
-            <a
-              href={src}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={handleOpenInTab}
               className="flex-1 rounded-md border border-border bg-bg-subtle px-3 py-2 text-center text-sm text-text transition-colors hover:bg-bg-elevated"
             >
               ↗ فتح بتبويب جديد
-            </a>
+            </button>
           </div>
+
+          {/* شريط تقدّم التنزيل الحي — يظهر فقط أثناء "جارِ التنزيل" فعلياً. */}
+          {busy && progress && (
+            <div className="flex flex-col gap-1">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
+                <div
+                  className="h-full rounded-full bg-accent transition-all"
+                  style={{
+                    width: progress.total
+                      ? `${Math.min(100, Math.round((progress.loaded / progress.total) * 100))}%`
+                      : "35%",
+                  }}
+                />
+              </div>
+              <p className="text-xs text-text-muted">
+                {progress.total
+                  ? `تم تحميل ${formatFileSize(progress.loaded)} من ${formatFileSize(progress.total)}`
+                  : `تم تحميل ${formatFileSize(progress.loaded)}`}
+              </p>
+            </div>
+          )}
 
           {/* تأكيد يظهر فقط لملف محمّل مسبقاً — بدل استبدال النسخة المحفوظة
               بصمت عند ضغطة "تنزيل" ثانية. */}
