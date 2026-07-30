@@ -3,7 +3,14 @@
     {
       "section": "theory",
       "hidden": false,
-      "items": []
+      "items": [
+        {
+          "type": "pdf",
+          "title": "Intermediate-SB (units 6, 7, 8, 9)",
+          "file": "Intermediate-SB (units 6, 7, 8, 9).pdf",
+          "hidden": false
+        }
+      ]
     },
     {
       "section": "extra",
