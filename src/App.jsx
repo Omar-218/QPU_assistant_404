@@ -17,11 +17,15 @@ import AdminAuthGate from "./components/admin/AdminAuthGate.jsx";
 //
 // ⚠️ تحديث إداري: حالة فتح/إغلاق القائمة الجانبية على الجوال تعيش هنا (أب
 // مشترك لـ Header وSidebar، وهما إخوة لا أحدهما ابن الآخر).
+//
+// ⚠️ تحديث إداري (2026-07-30، مهمة "تصفح بدون إنترنت"): مسار عام جديد
+// /offline (OfflineDownloads.jsx) — نفس مستوى /notifications، بلا AdminAuthGate.
 
 const SubjectList = lazy(() => import("./pages/SubjectList.jsx"));
 const Subject = lazy(() => import("./pages/Subject.jsx"));
 const StudyPlan = lazy(() => import("./pages/StudyPlan.jsx"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage.jsx"));
+const OfflineDownloads = lazy(() => import("./pages/OfflineDownloads.jsx"));
 const AdminHome = lazy(() => import("./pages/Admin/AdminHome.jsx"));
 const AdminSubjectEditor = lazy(() => import("./pages/Admin/AdminSubjectEditor.jsx"));
 const AdminSectionsManager = lazy(() => import("./pages/Admin/AdminSectionsManager.jsx"));
@@ -48,6 +52,7 @@ export default function App() {
                 <Route path="/subject/:id" element={<Subject />} />
                 <Route path="/study-plan" element={<StudyPlan />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/offline" element={<OfflineDownloads />} />
                 <Route
                   path="/admin"
                   element={

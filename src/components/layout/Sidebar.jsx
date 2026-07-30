@@ -20,10 +20,16 @@ import ContactSection from "./ContactSection.jsx";
 // مثبَّت الآن أسفل القائمة دائماً بلا تمرير معه — النافبار + المفضلة + آخر
 // الزيارات صارت بمنطقة قابلة للتمرير المستقل (flex-1 overflow-y-auto) فوقه،
 // بحيث القسم السفلي يبقى ظاهراً دائماً حتى لو طالت قائمة "آخر الزيارات".
+//
+// ⚠️ تحديث إداري (2026-07-30، مهمة "تصفح بدون إنترنت"): رابط دائم جديد
+// "📥 المواد بدون إنترنت" (/offline) بـ NAV_ITEMS — ثابت دائماً (بخلاف
+// FavoritesSection/RecentlyViewedSection الشرطيَّين) لأنه صفحة ميزة أساسية
+// لا تخصيص شخصي، تعرض حالتها الفارغة بنفسها لو ما فيه ملفات محمّلة بعد.
 
 const NAV_ITEMS = [
   { to: "/", label: "المواد", end: true },
   { to: "/study-plan", label: "الخطة الدراسية" },
+  { to: "/offline", label: "📥 المواد بدون إنترنت" },
 ];
 
 export default function Sidebar({ open = false, onClose }) {

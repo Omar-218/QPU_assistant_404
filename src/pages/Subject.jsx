@@ -25,6 +25,12 @@ import UploadRequestForm from "../components/subject/UploadRequestForm.jsx";
 // ⚠️ خطة الدفعة 5: زرّا "اقترح حدثاً"/"اطلب رفع ملف" (يفتحان
 // EventRequestForm/UploadRequestForm أدناه بالتناوب — واحد بالمرة)، وشريط
 // الأحداث النشِطة أعلى المحتوى (من events.json، مبني على isEventActive).
+//
+// ⚠️ تحديث (2026-07-30، مهمة المدير — "تصفح بدون إنترنت"): يمرَّر لكل
+// LectureItem من نوع pdf/image الآن fileId (`${id}::${item.file}`) +
+// subjectId + subjectName + sectionLabel، ليتولى المكوّن نفسه شارة "محمّلة"
+// وتأكيد إعادة التنزيل مقابل الفتح المحلي (useOfflineFiles.js). لا تخزين ولا
+// حالة إضافية هنا — كل المنطق داخل LectureItem.jsx حصراً.
 
 // مسار ملفات pdf/image المنشورة (اتفاق عضو 5): public/pdf/{slug}/...
 // مبني على import.meta.env.BASE_URL عشان يشتغل صح تحت مسار فرعي بـ GitHub Pages.
@@ -200,6 +206,10 @@ export default function Subject() {
                       isOpen={isViewerType && openKey === key}
                       onToggle={isViewerType ? () => toggleFile(key) : undefined}
                       src={isViewerType ? fileSrc(id, item.file) : undefined}
+                      fileId={isViewerType && item.file ? `${id}::${item.file}` : undefined}
+                      subjectId={id}
+                      subjectName={subject.name}
+                      sectionLabel={SECTION_LABELS[section.section] || section.section}
                     />
                   );
                 })}

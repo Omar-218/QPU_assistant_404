@@ -755,3 +755,76 @@ fileReplacements?: [{ section, file, newFile }]
 مبنية ومُختبَرة. **الاقتباس الذي أرسله المستخدم كان غير دقيق بالكامل بالنسبة لهذي الحزمة** — أياً
 كان مصدره، لم يصل الريبو الفعلي؛ التوصية القياسية تتكرر: أي عمل يُذكر بمحادثة يُعتبَر غير موجود
 حتى يظهر فعلياً بالكود المفحوص مباشرة + سجل موثَّق بـ `docs/logs/`.
+
+---
+
+## 22. ميزة جديدة: تصفح المواد المحمّلة بدون إنترنت (IndexedDB) — 2026-07-30
+
+بطلب مباشر من المستخدم (خطة `docs/team-plan-downloads-notifications.md` المقترَحة بجلسة سابقة،
+المهمة الأولى فقط — التنزيلات، لا الإشعارات). راجع `manager-log.md` جلسة 16 للتفاصيل الكاملة.
+
+### مخزن IndexedDB الجديد (`src/lib/offlineFiles.js`)
+قاعدة `assistant404-offline` (نسخة 1) > مخزن كائنات `files` (`keyPath: fileId`)، فهرس ثانوي
+`bySubject` على `subjectId`.
+
+```js
+{
+  fileId: string,       // "{subjectId}::{item.file}" — يُبنى بـ LectureItem.jsx حصراً
+  subjectId: string,
+  subjectName: string,
+  sectionLabel: string, // نص عرض القسم (SECTION_LABELS)، اختياري
+  title: string,        // item.title الأصلي
+  fileName: string,     // item.file الأصلي
+  mimeType: string,     // مخمَّن من الامتداد (guessMimeType)، pdf/png/jpg/jpeg/gif/webp، وإلا octet-stream
+  blob: Blob,           // محتوى الملف الفعلي
+  sizeBytes: number,
+  downloadedAt: number, // Date.now()
+}
+```
+
+### حدث مزامنة داخل التبويب
+`OFFLINE_CHANGE_EVENT = "assistant404:offline-files-changed"` — نفس نمط `useFavorites.js` الحالي
+تماماً (`CustomEvent` على `window`، لأن حدث `storage` الطبيعي لا يُطلَق لنفس التبويب اللي كتب
+القيمة). كل نسخة من `useOfflineFiles()` تستمع له.
+
+### عقد `useOfflineFiles()` (`src/hooks/useOfflineFiles.js`)
+```js
+const {
+  files,                 // بيانات وصفية فقط (بلا Blob)، الأحدث أولاً
+  loading,
+  isDownloaded(fileId),  // بحث بالذاكرة فقط
+  downloadFile(meta, src),  // fetch + حفظ محلي، يرمي عند فشل الشبكة
+  openOffline(fileId),      // فتح تبويب جديد من Blob محلي — يعمل بدون نت
+  removeOffline(fileId),
+  groupedBySubject(),       // { [subjectId]: { subjectName, files: [...] } }
+} = useOfflineFiles();
+```
+
+### تكامل `LectureItem.jsx`/`Subject.jsx`
+`Subject.jsx` يمرّر `fileId/subjectId/subjectName/sectionLabel` لكل عنصر pdf/image فقط (النوعان
+القابلان للتنزيل أصلاً). `LectureItem.jsx` بلا هذي الـ props (استخدام مستقبلي خارج `Subject.jsx`)
+يعمل تماماً كالسابق (تنزيل مباشر بلا تخزين محلي) — توافق عكسي كامل، لا كسر لأي استهلاك موجود.
+
+سلوك زر "تنزيل" الجديد (القرار الحرفي المطلوب من المستخدم):
+- **غير محمّل**: تنزيل شبكة عادي + حفظ محلي بنفس اللحظة (Blob واحد، لا جلب مضاعف).
+- **محمّل مسبقاً**: تأكيد صريح (فتح النسخة المحفوظة / تنزيل مرة أخرى) — **لا استبدال صامت أبداً**.
+- شارة "📥 محمّلة" ظاهرة دائماً بجانب العنوان (مطوياً أو مفتوحاً) لأي عنصر محفوظ محلياً.
+
+### صفحة جديدة `/offline` (`src/pages/OfflineDownloads.jsx`)
+عامة (بلا `AdminAuthGate`، نفس مستوى `/notifications`)، تعرض `groupedBySubject()` بقوائم فتح/حذف
+لكل ملف. رابط دائم الظهور بالقائمة الجانبية (`Sidebar.jsx`، `NAV_ITEMS`) — خلافاً لـ
+`FavoritesSection`، لا يختفي عند الفراغ (صفحة ميزة أساسية، تعرض حالتها الفارغة بنفسها).
+
+### قيد معماري متعمَّد (لا Service Worker)
+هذي المرحلة تخزّن **الملفات نفسها** فقط، لا shell الموقع (React/JS/CSS). يعني: فتح `/offline` بدون
+نت يعمل فقط إذا كان التبويب/الموقع مفتوحاً أصلاً بهذي الجلسة (أو تم تحميله سابقاً من كاش المتصفح
+الطبيعي بلا ضمان). فتح الموقع من الصفر بدون أي اتصال سابق إطلاقاً يحتاج Service Worker حقيقي —
+قرار منفصل موثَّق بالقسم 0 من `team-plan-downloads-notifications.md`، لم يُنفَّذ بهذي الجلسة.
+
+### التحقق (لا افتراضي)
+- فحص صياغة `esbuild` لكل ملف جديد/معدَّل على حدة: بلا أخطاء.
+- تجميع كامل الشجرة من `src/main.jsx` عبر `esbuild --bundle` (بيئة بلا اتصال شبكة، لم يُمكن تشغيل
+  `npm install`/`npm run build` الفعليين — نفس القيد التاريخي بجلسة 1/2): نجح بالكامل، كل مسارات
+  الاستيراد الجديدة تُحل صحيحاً.
+- **لم يُختبَر بمتصفح فعلي** — الاعتماد الكامل ينتظر تحقق بشري (حجم IndexedDB الفعلي المتاح على
+  متصفحات الهاتف، وسلوك التأكيد بشاشة ضيقة).
