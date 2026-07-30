@@ -1,41 +1,41 @@
 // ⚠️ ملف جديد — مهمة المدير (إكمال ميزة "تصفح المواد بدون إنترنت"، 2026-07-30).
-// يحل السبب الجذري الحقيقي: بدون Service Worker، لا يقدر أي متصفح يفتح
-// الصفحة إطلاقاً بلا اتصال (لا React يبدأ حتى) — تخزين IndexedDB لملفات
-// المحاضرات (offlineFiles.js) كان يعمل صحيحاً، لكن لا فائدة منه ما دام
-// التطبيق نفسه لا يُحمَّل من الأساس.
+// ⚠️ إصلاح 2026-07-31: النسخة الأولى فشلت فعلياً بالاستخدام الحي — السبب
+// الحقيقي مختلف عمّا افترضته أول مرة. راجع الشرح الكامل أسفل دالة fetch.
 //
-// الاستراتيجية: "الشبكة أولاً، والكاش عند الفشل" (network-first, fallback
-// to cache) لكل طلب GET من نفس الأصل (same-origin) — بلا أي مكتبة/اعتمادية
-// جديدة (اتساقاً مع قرار offlineFiles.js: IndexedDB خام بلا مكتبة idb).
-// كل صفحة/بيانات (JS/CSS/HTML + public/data/**.json) يزورها الطالب أثناء
-// اتصاله بالإنترنت تُخزَّن تلقائياً بصمت؛ عند انقطاع الاتصال لاحقاً، تُقرأ
-// من هذا الكاش بدل فشل الشبكة — بلا أي تعديل مطلوب بـ useSubjectData.js أو
-// أي fetch() آخر بالتطبيق (اعتراض شفّاف على مستوى الشبكة).
-//
-// ما لا يُخزَّن أبداً (متعمَّد):
-//   - أي طلب غير GET (نشر/حذف الأدمن كلها POST/PUT/DELETE لـ api.github.com)
-//   - أي طلب لأصل مختلف (api.github.com) — لا نتدخل بخط أنابيب النشر إطلاقاً
-//   - طلبات بها `cache: "no-store"`/معامل `?_=` (كسر كاش متعمَّد من
-//     AdminSectionsManager.jsx لقراءات الأدمن الحديثة دائماً) — نتجاهلها
-//     بالكامل ونمررها للشبكة مباشرة بلا اعتراض، حفاظاً على نيّة "أحدث نسخة
-//     فعلياً" الصريحة بذاك الكود.
+// الاستراتيجية: "الشبكة أولاً، والكاش عند الفشل" لكل الأصول/البيانات
+// (JS/CSS/JSON)، لكن **معاملة خاصة صريحة لطلبات التصفح (navigation)** —
+// راجع لماذا أسفل.
 
-const CACHE_NAME = "assistant404-shell-v1";
+const CACHE_NAME = "assistant404-shell-v2"; // ⚠️ رُفِع الرقم لإبطال كاش v1 الفاسد تلقائياً
+const APP_SHELL_KEY = "app-shell"; // مفتاح كاش ثابت لصفحة index.html نفسها، بمعزل عن أي مسار
 
 self.addEventListener("install", (event) => {
-  // لا قائمة تثبيت مسبقة (precache) هنا عمداً — أسماء ملفات JS/CSS بعد
-  // البناء تحمل hash متغيّر بكل نشر، وبناء قائمة تثبيت ثابتة يحتاج خطوة
-  // بناء إضافية (مثل vite-plugin-pwa) وهذا اعتماد جديد لم نقرره. بدلاً من
-  // ذلك: التخزين "أثناء التصفح" (runtime caching) أدناه يغطي نفس الهدف
-  // بلا أي تعقيد بناء إضافي.
-  self.skipWaiting();
+  event.waitUntil(
+    (async () => {
+      // ⚠️ جديد: تخزين صريح لصفحة index.html (جذر الموقع) وقت التثبيت —
+      // هذا هو "قشرة التطبيق" (app shell) التي سنعيدها لأي تنقّل فاشل بلا
+      // اتصال، بصرف النظر عن المسار المطلوب. لا قائمة تثبيت كاملة لكل
+      // JS/CSS (أسماؤها متغيّرة بـhash لكل بناء، تحتاج خطوة بناء إضافية
+      // كـvite-plugin-pwa وهذا اعتماد جديد لم نقرره) — يكفي تخزين المستند
+      // الرئيسي فقط هنا؛ باقي الأصول تُخزَّن أثناء التصفح العادي أدناه.
+      try {
+        const shellUrl = self.registration.scope; // مثال: https://x.github.io/QPU_assistant_404/
+        const res = await fetch(shellUrl);
+        if (res && res.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(APP_SHELL_KEY, res.clone());
+        }
+      } catch {
+        // بلا اتصال وقت أول تثبيت (نادر) — التخزين أثناء التصفح لاحقاً يكفي.
+      }
+      self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // تنظيف أي كاش قديم من نسخة سابقة لهذا الـSW (رفع CACHE_NAME عند أي
-      // تغيير مستقبلي بمنطق التخزين يكفي لإجبار تحديث نظيف).
       const keys = await caches.keys();
       await Promise.all(
         keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
@@ -56,23 +56,59 @@ self.addEventListener("fetch", (event) => {
   if (new URL(request.url).origin !== self.location.origin) return; // api.github.com إلخ
   if (isNoStoreRequest(request)) return; // قراءات الأدمن الحديثة دائماً — نيّة صريحة بالكود
 
+  // ⚠️ الإصلاح الجوهري: طلبات التصفح (تنقّل مباشر لمسار مثل
+  // /subject/computer-skills، أو فتح رابط/تحديث الصفحة) يجب أن تُعامَل
+  // بمعزل عن باقي الطلبات. لماذا فشلت النسخة السابقة تحديداً هنا:
+  // GitHub Pages تُرجع محتوى index.html فعلياً لأي مسار غير موجود (بفضل
+  // نسخ index.html→404.html بسكربت البناء) — لكنها تُرجعه بحالة HTTP 404
+  // حرفياً (فقط المحتوى تغيّر، لا رمز الحالة). شرط `response.ok` بالنسخة
+  // الأولى كان يرفض تخزين أي رد بحالة 404 — أي إن أي مسار SPA فرعي
+  // (أي شيء غير الجذر "/") **لم يُخزَّن إطلاقاً بأي كاش قط**، حتى بعد
+  // زيارته بنجاح أثناء الاتصال. بلا اتصال لاحقاً: فشل الشبكة، لا كاش
+  // لذاك المسار بالتحديد، فشل كامل — بالضبط العرَض المُبلَّغ.
+  // الحل: لطلبات mode:"navigate" تحديداً، لا نعتمد على تخزين كل مسار على
+  // حدة إطلاقاً — نعيد دائماً "قشرة التطبيق" المخزَّنة وقت install (أو
+  // آخر رد شبكي ناجح إن وُجد)، بصرف النظر عن المسار المطلوب. React Router
+  // (BrowserRouter) يقرأ location.pathname بعد التحميل ويعرض المكوّن
+  // الصحيح تلقائياً — نفس ما يحدث فعلياً بالنشر الحي أونلاين.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(request);
+          // تحديث "القشرة" بصمت من أي تنقّل ناجح متصل — يبقيها محدَّثة مع
+          // كل نشر جديد بلا انتظار حدث install فقط.
+          if (networkResponse && networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(APP_SHELL_KEY, networkResponse.clone());
+          }
+          return networkResponse; // متصل: نترك الشبكة/GitHub Pages تتصرف طبيعياً
+        } catch {
+          const cache = await caches.open(CACHE_NAME);
+          const shell = await cache.match(APP_SHELL_KEY);
+          if (shell) return shell;
+          throw new Error("offline-and-no-shell-cached");
+        }
+      })()
+    );
+    return;
+  }
+
+  // باقي الطلبات (JS/CSS/JSON بـ data/**) — هذي فعلاً تُرجَع بحالة 200
+  // حقيقية عند النجاح، فشرط response.ok هنا صحيح وآمن (بعكس حالة التصفح
+  // أعلاه)، فالتخزين أثناء التصفح يعمل كما هو مخطَّط أصلاً.
   event.respondWith(
     (async () => {
       try {
         const networkResponse = await fetch(request);
-        // ننسخ وننخزّن فقط الردود الناجحة (200) — لا نخزّن 404/أخطاء بالغلط.
         if (networkResponse && networkResponse.ok) {
           const cache = await caches.open(CACHE_NAME);
           cache.put(request, networkResponse.clone());
         }
         return networkResponse;
       } catch {
-        // فشل الشبكة (بلا اتصال) — نرجع لآخر نسخة مخزَّنة من زيارة سابقة.
         const cached = await caches.match(request);
         if (cached) return cached;
-        // لا كاش ولا شبكة: لا يوجد شيء نقدر نعرضه لهذا الطلب تحديداً
-        // (مثلاً أول زيارة لصفحة لم تُفتَح قط أثناء اتصال) — نترك الفشل
-        // الطبيعي يظهر بدل اختلاق رد وهمي.
         throw new Error("offline-and-not-cached");
       }
     })()
