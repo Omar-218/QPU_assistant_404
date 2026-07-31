@@ -89,6 +89,21 @@
       "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/14",
       "createdAt": "2026-07-29T09:36:37.475Z",
       "decidedAt": "2026-07-29T09:37:20.135Z"
+    },
+    {
+      "id": "evt_1785337531545_4e16",
+      "subjectId": "circuits",
+      "subjectName": "الدارات الكهربائية - 1",
+      "type": "other",
+      "typeLabel": "شرح المقرر",
+      "title": "https://youtube.com/playlist?list=PLin-qE531ul68lpCTi1hGypDgd2zGDm1z&si=Cx6l5An0a_OAwnxS",
+      "date": "2026-07-29",
+      "submittedByLabel": "",
+      "status": "rejected",
+      "adminNote": "",
+      "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/17",
+      "createdAt": "2026-07-29T15:05:34.692Z",
+      "decidedAt": "2026-07-31T14:53:36.058Z"
     }
   ]
 }
