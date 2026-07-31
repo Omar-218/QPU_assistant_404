@@ -105,7 +105,8 @@
     {
       "id": "programming-2",
       "name": "برمجة (2)",
-      "code": "1120503"
+      "code": "1120503",
+      "hidden": false
     },
     {
       "id": "computer-architecture",
