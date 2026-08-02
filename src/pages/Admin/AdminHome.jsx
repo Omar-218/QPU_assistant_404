@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PublishPanel from "../../components/admin/PublishPanel.jsx";
 import StudyPlanEditor from "../../components/admin/StudyPlanEditor.jsx";
+import { usePendingRequestsCount } from "../../hooks/usePendingRequestsCount.js";
+import { useLastPublishDate } from "../../hooks/useLastPublishDate.js";
 
 // ⚠️ ملف مملوك لعضو 3 (لوحة التحكم — الواجهة).
 //
@@ -44,7 +46,37 @@ import StudyPlanEditor from "../../components/admin/StudyPlanEditor.jsx";
 // بالاستيراد الحقيقي كما أوصى التعليق أعلاه بالضبط — بقية الملف لم تحتج أي تعديل
 // إضافي (فرع else بعرض pkg الحقيقي عبر PublishPanel كان جاهزاً مسبقاً وينتظر هذا
 // فقط).
-import { buildSubjectDeletion } from "../../lib/githubPublisher.js";
+import { buildSubjectDeletion, buildStudyPlanUpdate } from "../../lib/githubPublisher.js";
+import { exportFullBackupZip } from "../../lib/fullBackup.js";
+
+// ⚠️ تحديث (2026-08-02، طلب مباشر من المستخدم — اقتراح #4 من مراجعة خبير
+// للوحة التحكم: "إجراءات جماعية"): تحديد عدة مواد بـ checkbox (فوق القائمة
+// المفلترة/المبحوثة أصلاً باقتراح #1 — التحديد يعمل فقط على ما هو ظاهر
+// حالياً بالقائمة) ثم "إخفاء المحدد"/"إظهار المحدد" ببناء *حزمة نشر حقيقية
+// واحدة* (buildStudyPlanUpdate على كامل subjects بعد تعديل حقل hidden لكل
+// معرّف محدَّد فقط) — بخلاف toggleLocalHidden أعلاه (معاينة محلية بحتة تحتاج
+// فتح كل مادة يدوياً لتُنشَر)، هذا فعلي: يعرض PublishPanel مباشرة بعد
+// الضغط، ونشر ناجح واحد يحدّث كل المواد المحدَّدة معاً بنفس commit/PR.
+// لا علاقة له بالحذف (deleteState) ولا بمعاينة toggleLocalHidden — حالة
+// منفصلة تماماً (bulkPkg) تُغلَق فور الإلغاء أو النشر الناجح.
+
+// ⚠️ تحديث (2026-08-02، طلب مباشر من المستخدم — اقتراحات #1 و#3 من مراجعة
+// خبير للوحة التحكم):
+//   #3 شارة عدد الطلبات المعلَّقة بجانب رابط "طلبات الطلاب" — usePendingRequestsCount
+//      (جديد، src/hooks/) يعدّ PRs المفتوحة بعنوان [event]/[upload] عبر GitHub API
+//      مباشرة (نفس ما AdminRequestsQueue.jsx يفعله أصلاً، هنا فقط عدّ بلا تفاصيل).
+//      null (بلا توكن أو فشل الجلب) = لا تُعرَض أي شارة إطلاقاً، لا صفر مضلِّل.
+//   #1 بحث بالاسم/الرمز/الرقم + فلترة (الكل/ظاهر/مخفي) فوق قائمة المواد — محلي
+//      بالكامل (بلا أي طلب شبكة إضافي)، على `subjects` بعد جلبها أصلاً.
+//
+// ⚠️ تحديث ثانٍ (2026-08-02، الموجة الثانية من نفس المراجعة — اقتراحات #8 و#9):
+//   #8 زر "⭳ نسخة احتياطية كاملة (ZIP)" بجانب "طلبات الطلاب" — يستدعي
+//      exportFullBackupZip (جديد، src/lib/fullBackup.js) مباشرة، بلا أي حالة
+//      إضافية بهذا الملف عدا مؤشر "جارِ التجهيز" بسيط.
+//   #9 شريط إحصائيات صغير (إجمالي/ظاهر/مخفي) أعلى قائمة المواد — من subjects
+//      نفسها، بلا أي طلب شبكة إضافي.
+// رابط "🔍 فاحص الروابط" (اقتراح #7) صفحة منفصلة كاملة (AdminLinkChecker.jsx)،
+// فقط رابط تنقّل هنا لا منطق.
 
 async function fetchStudyPlan() {
   const res = await fetch(`${import.meta.env.BASE_URL}data/study-plan.json?_=${Date.now()}`, {
@@ -79,6 +111,39 @@ export default function AdminHome() {
   // تدفّق الحذف: id → "confirming" | "building" | pkg الناتج
   const [deleteState, setDeleteState] = useState({});
 
+  // ⚠️ جديد (2026-08-02، اقتراح #1): بحث/فلترة محليان بالكامل — لا يؤثران على
+  // studyPlan/subjects نفسها، فقط على ما يُعرَض بالقائمة أدناه.
+  const [searchQuery, setSearchQuery] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState("all"); // "all" | "visible" | "hidden"
+
+  // ⚠️ جديد (2026-08-02، اقتراح #3)
+  const { count: pendingCount } = usePendingRequestsCount();
+
+  // ⚠️ جديد (2026-08-02) — يكمل اقتراح #9 بعد تنفيذ #5 بهذي الجلسة (راجع
+  // توثيق useLastPublishDate.js).
+  const { date: lastPublishDate } = useLastPublishDate();
+
+  // ⚠️ جديد (2026-08-02، اقتراح #4): تحديد جماعي + حزمة نشر جماعية جاهزة
+  // (buildStudyPlanUpdate) — null يعني لا يوجد إجراء جماعي معروض حالياً.
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkPkg, setBulkPkg] = useState(null);
+
+  // ⚠️ جديد (2026-08-02، اقتراح #8)
+  const [backupStatus, setBackupStatus] = useState("idle"); // idle | zipping | error
+  const [backupError, setBackupError] = useState(null);
+
+  async function handleFullBackup() {
+    setBackupStatus("zipping");
+    setBackupError(null);
+    try {
+      await exportFullBackupZip();
+      setBackupStatus("idle");
+    } catch (err) {
+      setBackupError(err.message || "فشل تجهيز النسخة الاحتياطية");
+      setBackupStatus("error");
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     fetchStudyPlan()
@@ -98,11 +163,67 @@ export default function AdminHome() {
 
   const subjects = studyPlan.courses ?? [];
 
+  // ⚠️ جديد (2026-08-02، اقتراح #1): يُطبَّق فوق subjects مباشرة — hiddenNow
+  // (التعديل المحلي للمعاينة) يبقى محسوباً كما هو بداخل map أدناه بلا تغيير،
+  // فقط نستخدم نفس منطق "hidden الأصلي أو localOverrides" هنا أيضاً حتى تعكس
+  // الفلترة أي تعديل معاينة محلي فوري.
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredSubjects = subjects.filter((s) => {
+    const hiddenNow = localOverrides[s.id] ?? s.hidden;
+    if (visibilityFilter === "visible" && hiddenNow) return false;
+    if (visibilityFilter === "hidden" && !hiddenNow) return false;
+    if (!normalizedQuery) return true;
+    const haystack = `${s.name ?? ""} ${s.code ?? ""} ${s.id ?? ""}`.toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
+
   function toggleLocalHidden(id) {
     setLocalOverrides((prev) => ({
       ...prev,
       [id]: !(prev[id] ?? subjects.find((s) => s.id === id)?.hidden ?? false),
     }));
+  }
+
+  // ⚠️ جديد (اقتراح #4) — التحديد يعمل فقط على المعرّفات الظاهرة فعلياً
+  // بالقائمة المفلترة/المبحوثة حالياً (filteredSubjects محسوبة أدناه بنفس
+  // مكانها السابق تماماً)، لا كل subjects — سلوك متوقَّع لو كان الطالب/الأدمن
+  // مصفٍّ بحثاً بالتو ولا يقصد التأثير على مواد غير ظاهرة أمامه.
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllFiltered(ids) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(ids);
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  // hidden: القيمة الجديدة المطلوبة (true = إخفاء المحدَّد، false = إظهاره)
+  // — تُطبَّق فقط على المعرّفات المحدَّدة، بقية subjects كما هي بلا تغيير.
+  function buildBulkVisibility(hidden) {
+    const updatedCourses = subjects.map((s) =>
+      selectedIds.has(s.id) ? { ...s, hidden } : s
+    );
+    setBulkPkg(buildStudyPlanUpdate(updatedCourses));
+  }
+
+  function cancelBulk() {
+    setBulkPkg(null);
+  }
+
+  function handleBulkPublishSuccess() {
+    setBulkPkg(null);
+    clearSelection();
   }
 
   function askDelete(id) {
@@ -134,9 +255,14 @@ export default function AdminHome() {
         <div className="flex items-center gap-2">
           <Link
             to="/admin/requests"
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
+            className="relative rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
           >
             طلبات الطلاب
+            {Boolean(pendingCount) && (
+              <span className="ms-1.5 rounded-full bg-danger-border px-1.5 py-0.5 text-[11px] font-medium text-white">
+                {pendingCount}
+              </span>
+            )}
           </Link>
           <Link
             to="/admin/events-log"
@@ -144,6 +270,26 @@ export default function AdminHome() {
           >
             سجل الأحداث
           </Link>
+          <Link
+            to="/admin/link-checker"
+            className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
+          >
+            🔍 فاحص الروابط
+          </Link>
+          <Link
+            to="/admin/audit-log"
+            className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
+          >
+            📜 سجل التدقيق
+          </Link>
+          <button
+            type="button"
+            onClick={handleFullBackup}
+            disabled={backupStatus === "zipping"}
+            className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated disabled:opacity-50"
+          >
+            {backupStatus === "zipping" ? "...جارِ التجهيز" : "⭳ نسخة احتياطية كاملة"}
+          </button>
           <Link
             to="/admin/sections"
             className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
@@ -158,6 +304,33 @@ export default function AdminHome() {
           </Link>
         </div>
       </div>
+
+      {backupError && <p className="text-sm text-danger-text">{backupError}</p>}
+
+      {/* ⚠️ جديد (2026-08-02، اقتراح #9): إحصائيات بسيطة من subjects نفسها —
+          بلا أي طلب شبكة إضافي. "آخر نشر" أُضيف لاحقاً بنفس الجلسة بعد تنفيذ
+          #5 (useLastPublishDate — GitHub Commits API)، يختفي بصمت بلا توكن. */}
+      {subjects.length > 0 && (
+        <div className="flex flex-wrap gap-3 text-sm">
+          <span className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-text">
+            📚 إجمالي المواد: <strong className="text-text-h">{subjects.length}</strong>
+          </span>
+          <span className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-text">
+            👁️ ظاهرة: <strong className="text-text-h">{subjects.filter((s) => !s.hidden).length}</strong>
+          </span>
+          <span className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-text">
+            🙈 مخفية: <strong className="text-text-h">{subjects.filter((s) => s.hidden).length}</strong>
+          </span>
+          {lastPublishDate && (
+            <span className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-text">
+              🕓 آخر نشر:{" "}
+              <strong className="text-text-h">
+                {new Date(lastPublishDate).toLocaleString("ar", { dateStyle: "medium", timeStyle: "short" })}
+              </strong>
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-1 border-b border-border">
         <button
@@ -192,8 +365,108 @@ export default function AdminHome() {
             <p className="text-sm text-text-muted">لا توجد مواد بعد.</p>
           )}
 
+          {subjects.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ابحث بالاسم أو الرمز أو الرقم..."
+                className="min-w-[200px] flex-1 rounded-md border border-border bg-bg px-3 py-1.5 text-sm text-text"
+              />
+              <div className="flex gap-1">
+                {[
+                  { key: "all", label: "الكل" },
+                  { key: "visible", label: "ظاهر" },
+                  { key: "hidden", label: "مخفي" },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setVisibilityFilter(f.key)}
+                    className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                      visibilityFilter === f.key
+                        ? "border-accent bg-accent text-white"
+                        : "border-border text-text hover:bg-bg-elevated"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ⚠️ جديد (اقتراح #4): شريط الإجراءات الجماعية — يظهر فقط لو فيه
+              مادة واحدة محدَّدة على الأقل بالقائمة المعروضة حالياً. */}
+          {filteredSubjects.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <label className="flex items-center gap-1.5 text-text-muted">
+                <input
+                  type="checkbox"
+                  checked={
+                    filteredSubjects.length > 0 &&
+                    filteredSubjects.every((s) => selectedIds.has(s.id))
+                  }
+                  onChange={() => toggleSelectAllFiltered(filteredSubjects.map((s) => s.id))}
+                />
+                تحديد الكل (بالقائمة الحالية)
+              </label>
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-xs text-text-muted">{selectedIds.size} محدَّدة</span>
+                  <button
+                    type="button"
+                    onClick={() => buildBulkVisibility(true)}
+                    className="rounded-md border border-warning-border bg-warning-bg px-3 py-1.5 text-xs text-warning-text hover:opacity-90"
+                  >
+                    🙈 إخفاء المحدَّد
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => buildBulkVisibility(false)}
+                    className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-xs text-text hover:bg-bg-elevated"
+                  >
+                    👁️ إظهار المحدَّد
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="rounded-md border border-border px-3 py-1.5 text-xs text-text-muted hover:bg-bg-elevated"
+                  >
+                    إلغاء التحديد
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* حزمة النشر الجماعي — تظهر فوق القائمة (بمعزل عن أي صف/حذف فردي)
+              فور بناء buildBulkVisibility، بلا تأثير على أي pkg حذف مفتوح. */}
+          {bulkPkg && (
+            <div className="flex flex-col gap-2 rounded-md border border-border bg-bg-subtle p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-text">
+                  تحديث ظهور {selectedIds.size} مادة محدَّدة دفعة واحدة.
+                </p>
+                <button
+                  type="button"
+                  onClick={cancelBulk}
+                  className="rounded-md border border-border px-3 py-1 text-xs text-text hover:bg-bg-elevated"
+                >
+                  إلغاء
+                </button>
+              </div>
+              <PublishPanel pkg={bulkPkg} onPublishSuccess={handleBulkPublishSuccess} />
+            </div>
+          )}
+
+          {subjects.length > 0 && filteredSubjects.length === 0 && (
+            <p className="text-sm text-text-muted">لا توجد مواد مطابقة للبحث/الفلترة الحالية.</p>
+          )}
+
           <ul className="flex flex-col gap-2">
-            {subjects.map((s) => {
+            {filteredSubjects.map((s) => {
               const hiddenNow = localOverrides[s.id] ?? s.hidden;
               const del = deleteState[s.id];
               const confirming = del === "confirming";
@@ -212,18 +485,29 @@ export default function AdminHome() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-text-h">
-                        {s.name}{" "}
-                        {hiddenNow && !del && (
-                          <span className="ms-2 rounded-full bg-warning-border px-2 py-0.5 text-xs text-warning-text">
-                            مخفي
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-text-muted">
-                        {s.id} {s.code ? `· ${s.code}` : ""}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      {!del && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(s.id)}
+                          onChange={() => toggleSelect(s.id)}
+                          aria-label={`تحديد ${s.name}`}
+                          className="shrink-0"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium text-text-h">
+                          {s.name}{" "}
+                          {hiddenNow && !del && (
+                            <span className="ms-2 rounded-full bg-warning-border px-2 py-0.5 text-xs text-warning-text">
+                              مخفي
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-text-muted">
+                          {s.id} {s.code ? `· ${s.code}` : ""}
+                        </p>
+                      </div>
                     </div>
 
                     {!del && (

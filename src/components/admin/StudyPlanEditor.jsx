@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { isValidSlug } from "../../lib/idSlug.js";
 import PublishPanel from "./PublishPanel.jsx";
+import { useUnsavedChangesWarning } from "../../hooks/useUnsavedChangesWarning.js";
 
 // ⚠️ ملف مملوك لعضو 3 — جديد (مهمة "تحرير خطة المواد + حذف مباشر"، معتمدة
 // من المدير 2026-07-20). يحرّر **بيانات القائمة الوصفية فقط** بـ study-plan.json
@@ -96,6 +97,9 @@ export default function StudyPlanEditor() {
 
   const changed = original ? JSON.stringify(original.courses ?? []) !== JSON.stringify(courses) : false;
   const pkg = changed ? buildStudyPlanUpdate(courses) : null;
+  // ⚠️ جديد (2026-08-02، اقتراح #6): "changed" هنا محسوبة أصلاً لبناء pkg —
+  // إعادة استخدامها مباشرة لتحذير مغادرة الصفحة، بلا أي منطق دِبْليكيت.
+  useUnsavedChangesWarning(changed);
 
   if (loading) return <div className="text-text-muted">...جارِ التحميل</div>;
 

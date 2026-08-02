@@ -20,6 +20,13 @@ import AdminAuthGate from "./components/admin/AdminAuthGate.jsx";
 //
 // ⚠️ تحديث إداري (2026-07-30، مهمة "تصفح بدون إنترنت"): مسار عام جديد
 // /offline (OfflineDownloads.jsx) — نفس مستوى /notifications، بلا AdminAuthGate.
+//
+// ⚠️ تحديث إداري (2026-08-02، اقتراح #7 من مراجعة خبير للوحة التحكم): مسار
+// إداري جديد /admin/link-checker (AdminLinkChecker.jsx) — نفس نمط بقية
+// /admin/* (مغلَّف بـ AdminAuthGate).
+//
+// ⚠️ تحديث إداري (2026-08-02، اقتراح #5 من نفس المراجعة): مسار إداري جديد
+// /admin/audit-log (AdminAuditLog.jsx) — نفس نمط بقية /admin/* أيضاً.
 
 const SubjectList = lazy(() => import("./pages/SubjectList.jsx"));
 const Subject = lazy(() => import("./pages/Subject.jsx"));
@@ -31,6 +38,8 @@ const AdminSubjectEditor = lazy(() => import("./pages/Admin/AdminSubjectEditor.j
 const AdminSectionsManager = lazy(() => import("./pages/Admin/AdminSectionsManager.jsx"));
 const AdminRequestsQueue = lazy(() => import("./pages/Admin/AdminRequestsQueue.jsx"));
 const AdminEventsLog = lazy(() => import("./pages/Admin/AdminEventsLog.jsx"));
+const AdminLinkChecker = lazy(() => import("./pages/Admin/AdminLinkChecker.jsx"));
+const AdminAuditLog = lazy(() => import("./pages/Admin/AdminAuditLog.jsx"));
 
 function PageFallback() {
   return <div className="p-6 text-text-muted">...جارِ التحميل</div>;
@@ -90,6 +99,22 @@ export default function App() {
                   element={
                     <AdminAuthGate>
                       <AdminEventsLog />
+                    </AdminAuthGate>
+                  }
+                />
+                <Route
+                  path="/admin/link-checker"
+                  element={
+                    <AdminAuthGate>
+                      <AdminLinkChecker />
+                    </AdminAuthGate>
+                  }
+                />
+                <Route
+                  path="/admin/audit-log"
+                  element={
+                    <AdminAuthGate>
+                      <AdminAuditLog />
                     </AdminAuthGate>
                   }
                 />

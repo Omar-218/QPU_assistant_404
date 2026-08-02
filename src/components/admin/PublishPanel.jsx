@@ -10,6 +10,37 @@ import React, { useState } from "react";
 import { publishToGitHub, exportPackageAsZip } from "../../lib/githubPublisher.js";
 import { getStoredToken, DEFAULT_OWNER, DEFAULT_REPO } from "../../lib/adminAuth.js";
 
+// ⚠️ جديد (2026-08-02، طلب مباشر من المستخدم — اقتراح #2 من مراجعة خبير
+// للوحة التحكم: "معاينة قبل النشر"). ملخّص بسيط لما سيتغيّر فعلياً قبل ضغط
+// "نشر" — نُشتَق من شكل pkg نفسه (بلا أي طلب شبكة إضافي، البيانات موجودة
+// أصلاً بالحزمة). ثلاثة أشكال pkg معروفة تصل PublishPanel فعلاً (تحقّقتُ من
+// كل نقاط الاستدعاء الثلاث: SubjectForm.jsx/AdminSectionsManager.jsx كلاهما
+// buildSubjectPackage بلا حقل kind، StudyPlanEditor.jsx buildStudyPlanUpdate
+// كـ kind="study-plan-update"، AdminHome.jsx buildSubjectDeletion كـ
+// kind="subject-deletion" — راجع lib/githubPublisher.js لتوثيق كل شكل):
+//   - subject-deletion: حذف نهائي — يُعرَض بتحذير أحمر صريح.
+//   - study-plan-update: تحديث ملف قائمة المواد فقط.
+//   - (بلا kind، أي buildSubjectPackage): إنشاء/تحديث مادة — pkg لا يحمل
+//     معلومة "جديد أم تعديل" لكل ملف على حدة (subject.json/lectures.json قد
+//     يكونان أياً منهما)، فنعرضهما بصياغة محايدة "سيُكتب" بدل الجزم بأحدهما.
+function describePackage(pkg) {
+  if (!pkg) return null;
+  if (pkg.kind === "subject-deletion") {
+    return {
+      danger: true,
+      write: [pkg.studyPlanPath],
+      del: [...pkg.filesToDelete, `${pkg.pdfDir}/* (كل ملفات هذي المادة)`],
+    };
+  }
+  if (pkg.kind === "study-plan-update") {
+    return { danger: false, write: [pkg.studyPlanPath], del: [] };
+  }
+  // buildSubjectPackage (بلا kind)
+  const write = [pkg.subjectPath, pkg.lecturesPath, pkg.studyPlanPath].filter(Boolean);
+  const uploads = Array.isArray(pkg.pdfFiles) ? pkg.pdfFiles.map((f) => f.path) : [];
+  return { danger: false, write, uploads, del: [] };
+}
+
 export default function PublishPanel({ pkg, onPublishSuccess }) {
   // خطة الدفعة 4، المهمة 1: نفس توكن دخول لوحة التحكم (AdminAuthGate، عضو 3) يُستخدم
   // هنا مباشرة لو موجود ومصادَق عليه مسبقاً — يتخطى حقل الإدخال كلياً بهذي الحالة.
@@ -24,6 +55,15 @@ export default function PublishPanel({ pkg, onPublishSuccess }) {
   const [result, setResult] = useState(null); // { prUrl, merged, mergeError }
 
   const disabled = !pkg || status === "publishing" || status === "zipping";
+  const preview = describePackage(pkg);
+  // ⚠️ إصلاح خلل حرج ثانٍ من نفس المراجعة (2026-08-02): exportPackageAsZip
+  // بـ lib/githubPublisher.js يفترض هو الآخر شكل buildSubjectPackage حصراً
+  // (`for (const pdf of pkg.pdfFiles)` بلا أي حارس) — كان سيرمي استثناءً
+  // فوراً لو ضُغط "تنزيل حزمة (ZIP)" مع pkg حذف/تحديث خطة دراسية. الإصلاح
+  // هنا بمستوى الواجهة فقط (لا تعديل على lib/githubPublisher.js، ملف عضو 5):
+  // الزر لا معنى له أصلاً بهاتين الحالتين (لا ملفات فعلية لتُجمَّع بـ ZIP)،
+  // فيُخفى بدل تعطيله بلا تفسير.
+  const canZip = Boolean(pkg && !pkg.kind);
 
   async function handlePublish() {
     setError(null);
@@ -72,10 +112,50 @@ export default function PublishPanel({ pkg, onPublishSuccess }) {
     <div className="border border-border rounded-lg p-4 bg-bg-subtle space-y-4">
       <div>
         <h3 className="text-text-h font-semibold mb-1">النشر</h3>
+        {/* ⚠️ إصلاح خلل حرج اكتشفته أثناء بناء المعاينة أعلاه (2026-08-02، ليس
+            جزءاً من الاقتراح #2 نفسه — عثرت عليه بالصدفة بمراجعة هذا السطر):
+            الكود القديم كان يفترض دائماً {pkg.subjectJson.name}/{pkg.pdfFiles.length}
+            بصرف النظر عن نوع pkg — يعمل فقط مع buildSubjectPackage. أي استدعاء
+            من AdminHome.jsx (حذف مادة، buildSubjectDeletion) أو StudyPlanEditor.jsx
+            (buildStudyPlanUpdate) كان يجب أن يُسقِط هذا المكوّن بخطأ JS كامل
+            (subjectJson undefined) بمجرد ظهور pkg — أي أن شاشتي "حذف مادة" و"تحرير
+            خطة المواد" كانتا معطَّلتين كلياً بمجرد وصول مرحلة النشر. الآن يتفرّع
+            حسب pkg.kind بدل الافتراض الأعمى. */}
         <p className="text-text-muted text-sm">
-          {pkg.subjectJson.name} ({pkg.slug}) — {pkg.pdfFiles.length} ملف
+          {pkg.kind === "subject-deletion"
+            ? `حذف نهائي للمادة — ${pkg.slug}`
+            : pkg.kind === "study-plan-update"
+            ? "تحديث قائمة المواد (study-plan.json) فقط"
+            : `${pkg.subjectJson?.name ?? pkg.slug} (${pkg.slug}) — ${pkg.pdfFiles?.length ?? 0} ملف`}
         </p>
       </div>
+
+      {preview && (
+        <div
+          className={`rounded-md border p-3 text-xs space-y-1.5 ${
+            preview.danger
+              ? "border-danger-border bg-danger-bg text-danger-text"
+              : "border-border bg-bg text-text"
+          }`}
+        >
+          <p className="font-medium">سيحدث عند النشر:</p>
+          {preview.write.length > 0 && (
+            <p>
+              📝 سيُكتب/يُحدَّث ({preview.write.length}): {preview.write.join("، ")}
+            </p>
+          )}
+          {preview.uploads?.length > 0 && (
+            <p>
+              ⭳ سيُرفَع ({preview.uploads.length} ملف): {preview.uploads.join("، ")}
+            </p>
+          )}
+          {preview.del.length > 0 && (
+            <p className="font-medium">
+              🗑️ سيُحذَف نهائياً ({preview.del.length}): {preview.del.join("، ")}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="bg-warning-bg border border-warning-border text-warning-text text-xs rounded-md p-3">
         التوكن يُستخدم من متصفحك مباشرة للاتصال بـ GitHub فقط (api.github.com) — لا يُخزَّن
@@ -146,14 +226,16 @@ export default function PublishPanel({ pkg, onPublishSuccess }) {
         >
           {status === "publishing" ? "جارٍ النشر…" : "نشر"}
         </button>
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={disabled}
-          className="bg-bg-elevated hover:bg-bg-subtle disabled:opacity-50 text-text border border-border rounded-md px-4 py-2 text-sm font-medium"
-        >
-          {status === "zipping" ? "جارٍ التجهيز…" : "تنزيل حزمة (ZIP)"}
-        </button>
+        {canZip && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={disabled}
+            className="bg-bg-elevated hover:bg-bg-subtle disabled:opacity-50 text-text border border-border rounded-md px-4 py-2 text-sm font-medium"
+          >
+            {status === "zipping" ? "جارٍ التجهيز…" : "تنزيل حزمة (ZIP)"}
+          </button>
+        )}
       </div>
 
       {status === "success" && result && (

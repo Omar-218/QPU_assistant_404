@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { suggestSlug, suggestProfessorId, isValidSlug } from "../../lib/idSlug.js";
 import { SECTION_LABELS } from "../../lib/sectionLabels.js";
 import {
@@ -10,6 +10,7 @@ import { buildSubjectPackage } from "../../lib/githubPublisher.js";
 import SectionsManager from "./SectionsManager.jsx";
 import FileUploaderWidget from "./FileUploaderWidget.jsx";
 import PublishPanel from "./PublishPanel.jsx";
+import { useUnsavedChangesWarning } from "../../hooks/useUnsavedChangesWarning.js";
 
 // ⚠️ ملف مملوك لعضو 3 — نموذج إضافة/تعديل مادة كامل.
 //
@@ -191,7 +192,39 @@ export default function SubjectForm({
     setFileMeta({});
     setExtraItems([]);
     setUploaderResetKey((k) => k + 1);
+    // ⚠️ جديد (2026-08-02، اقتراح #6): نشر ناجح = "أُنقِذ العمل" فعلياً —
+    // نصفّر بصمة "الأصل" على الحالة الحالية فوراً حتى لا يبقى تحذير مغادرة
+    // الصفحة معلَّقاً على تغييرات نُشرت بالفعل.
+    initialSnapshotRef.current = watchedSnapshot;
+    setDirty(false);
   }
+
+  // ⚠️ جديد (2026-08-02، طلب مباشر من المستخدم — اقتراح #6 من مراجعة الخبير):
+  // تحذير عند مغادرة الصفحة بتعديلات غير منشورة. النموذج هنا مجزَّأ لعشرات
+  // متغيّرات useState منفصلة (بلا كائن حالة موحَّد)، فبدل تعديل كل معالِج
+  // onChange على حدة، نلتقط "بصمة" (snapshot) نصية لكل الحقول المحتوى الفعلي
+  // (لا الحقول المساعدة كـ slugTouched/uploaderResetKey) ونقارنها بالبصمة
+  // الأصلية عبر useEffect واحد فقط. rawFiles.length لا محتواه (File objects
+  // غير قابلة للتسلسل JSON بأمان) — كافٍ لاكتشاف "اختار ملفات جديدة".
+  const watchedSnapshot = JSON.stringify({
+    name,
+    code,
+    hidden,
+    description,
+    theorySchedule,
+    labSchedule,
+    slug,
+    sections,
+    extraItems,
+    fileMeta,
+    rawFilesCount: rawFiles.length,
+  });
+  const initialSnapshotRef = useRef(watchedSnapshot);
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (watchedSnapshot !== initialSnapshotRef.current) setDirty(true);
+  }, [watchedSnapshot]);
+  useUnsavedChangesWarning(dirty);
 
   function handleFilesSelected(files) {
     setRawFiles(files);

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SectionsManager from "../../components/admin/SectionsManager.jsx";
 import PublishPanel from "../../components/admin/PublishPanel.jsx";
 import { buildSubjectPackage } from "../../lib/githubPublisher.js";
+import { useUnsavedChangesWarning } from "../../hooks/useUnsavedChangesWarning.js";
 
 // ⚠️ ملف مملوك لعضو 3 — إدارة الأقسام (القسم 4.5: مستوى "القسم" من حقل hidden).
 // ملاحظة: SECTION_LABELS نفسه ملف نهائي جاهز (القسم 4.4) ولا يُعدَّل هنا —
@@ -59,6 +60,11 @@ export default function AdminSectionsManager() {
   // `${section}::${file}` → File. تُصفَّر عند تغيير المادة/الدكتور النشِط حتى
   // لا يُعاد استخدام ملف اختير لمادة/شعبة مختلفة بالغلط.
   const [replacements, setReplacements] = useState({});
+  // ⚠️ جديد (2026-08-02، اقتراح #6): بصمة الأقسام كما جاءت من الشبكة — تُحدَّث
+  // بكل مرة تُجلَب/تُعاد تحميل sections فعلياً (التحميل الأول، وتبديل الدكتور
+  // النشِط)، لا عند أي تعديل يدوي — هذا بالضبط ما نقارن ضده لمعرفة "هل عدَّل
+  // المدير شيئاً لم يُنشَر بعد؟".
+  const initialSectionsRef = useRef([]);
 
   function handleReplaceFile(sectionKey, fileName, file) {
     setReplacements((prev) => ({ ...prev, [`${sectionKey}::${fileName}`]: file }));
@@ -74,6 +80,7 @@ export default function AdminSectionsManager() {
       setSections([]);
       setActiveVariant(null);
       setReplacements({});
+      initialSectionsRef.current = [];
       return;
     }
     let cancelled = false;
@@ -90,6 +97,7 @@ export default function AdminSectionsManager() {
         setSubjectDetail(subj);
         setActiveVariant(firstVariant);
         setSections(lecturesData.sections ?? []);
+        initialSectionsRef.current = lecturesData.sections ?? [];
         setLoading(false);
       }
     });
@@ -106,6 +114,7 @@ export default function AdminSectionsManager() {
     const lecturesData = await fetchLectures(selectedId, filename);
     setActiveVariant(variant);
     setSections(lecturesData.sections ?? []);
+    initialSectionsRef.current = lecturesData.sections ?? [];
     setReplacements({});
     setLoading(false);
   }
@@ -143,6 +152,13 @@ export default function AdminSectionsManager() {
       pkg = null;
     }
   }
+
+  // ⚠️ جديد (2026-08-02، اقتراح #6): "عدَّل" = ترتيب/محتوى الأقسام تغيّر عن
+  // آخر تحميل فعلي من الشبكة، أو يوجد استبدال ملف معلَّق واحد على الأقل.
+  const dirty =
+    JSON.stringify(sections) !== JSON.stringify(initialSectionsRef.current) ||
+    Object.keys(replacements).length > 0;
+  useUnsavedChangesWarning(dirty);
 
   return (
     <div className="flex flex-col gap-4">
