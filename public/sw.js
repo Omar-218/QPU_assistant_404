@@ -1,29 +1,74 @@
 // ⚠️ ملف جديد — مهمة المدير (إكمال ميزة "تصفح المواد بدون إنترنت"، 2026-07-30).
 // ⚠️ إصلاح 2026-07-31: النسخة الأولى فشلت فعلياً بالاستخدام الحي — السبب
 // الحقيقي مختلف عمّا افترضته أول مرة. راجع الشرح الكامل أسفل دالة fetch.
-//
-// الاستراتيجية: "الشبكة أولاً، والكاش عند الفشل" لكل الأصول/البيانات
-// (JS/CSS/JSON)، لكن **معاملة خاصة صريحة لطلبات التصفح (navigation)** —
-// راجع لماذا أسفل.
+// ⚠️ تطوير 2026-08-02 (طلب مباشر من المستخدم — تشخيص "صفحة بيضاء عند الرجوع
+// للخلف بدون إنترنت"): احتمال جذري لم يكن مغطّى بالإصلاح السابق: الغلاف
+// المخزَّن (APP_SHELL_KEY) هو مستند HTML يشير لأسماء ملفات JS/CSS محدَّدة
+// (بـhash فريد لكل بناء Vite) — لكن تلك الملفات نفسها كانت تُخزَّن فقط
+// "عضوياً" (لو الطالب فعلاً طلبها أثناء تصفّحه). لو لأي سبب لم تُطلَب/تُخزَّن
+// (مثال: نشر جديد غيّر الأسماء بعد آخر تخزين للغلاف، أو ترتيب تحميل غير
+// متوقَّع)، الغلاف المخزَّن يشير لملفات غير موجودة بالكاش — فشل صامت يمنع
+// React من العمل إطلاقاً بدون نت. الحل: cacheShellAndAssets أدناه تفحص نص
+// الغلاف كل مرة يُخزَّن (تثبيت أو تنقّل ناجح) وتجلب/تخزّن أي <script>/<link>
+// مذكور بداخله صراحة — الغلاف وأصوله يُخزَّنون دائماً كمجموعة متطابقة واحدة،
+// لا اعتماداً على تصفّح عضوي منفصل قد لا يغطي كل شيء.
 
-const CACHE_NAME = "assistant404-shell-v2"; // ⚠️ رُفِع الرقم لإبطال كاش v1 الفاسد تلقائياً
+const CACHE_NAME = "assistant404-shell-v3"; // ⚠️ رُفِع الرقم لإبطال كاش v2 تلقائياً
 const APP_SHELL_KEY = "app-shell"; // مفتاح كاش ثابت لصفحة index.html نفسها، بمعزل عن أي مسار
+
+// يستخرج روابط <script src="..."> و<link href="...css/js"> من نص HTML خام.
+// لا DOMParser بسياق Service Worker (متاح فقط بسياق Window) — regex بسيط
+// كافٍ هنا لأن بنية مخرجات Vite قابلة للتوقّع تماماً (وسوم src/href صريحة).
+function extractAssetUrls(html, baseUrl) {
+  const urls = new Set();
+  const re = /(?:src|href)="([^"]+\.(?:js|css))"/g;
+  let m;
+  while ((m = re.exec(html))) {
+    try {
+      urls.add(new URL(m[1], baseUrl).href);
+    } catch {
+      // رابط غير صالح (نادر) — تجاهل هذا الملف فقط، أكمل الباقي
+    }
+  }
+  return [...urls];
+}
+
+// يخزّن الغلاف نفسه + كل أصوله المذكورة بداخله، كمجموعة واحدة متطابقة دائماً.
+// أفضل جهد بالكامل: فشل جلب أصل واحد لا يوقف تخزين البقية ولا الغلاف نفسه.
+async function cacheShellAndAssets(networkResponse, shellUrl) {
+  const cache = await caches.open(CACHE_NAME);
+  const forCache = networkResponse.clone();
+  const forText = networkResponse.clone();
+  await cache.put(APP_SHELL_KEY, forCache);
+  try {
+    const html = await forText.text();
+    const assetUrls = extractAssetUrls(html, shellUrl);
+    await Promise.all(
+      assetUrls.map(async (url) => {
+        try {
+          const res = await fetch(url);
+          if (res && res.ok) await cache.put(url, res.clone());
+        } catch {
+          // بلا اتصال/تعذّر جلب أصل واحد — أفضل جهد، لا نوقف البقية
+        }
+      })
+    );
+  } catch {
+    // تعذّر قراءة نص الغلاف (نادر جداً) — الغلاف نفسه مخزَّن أصلاً أعلاه، يكفي
+  }
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      // ⚠️ جديد: تخزين صريح لصفحة index.html (جذر الموقع) وقت التثبيت —
-      // هذا هو "قشرة التطبيق" (app shell) التي سنعيدها لأي تنقّل فاشل بلا
-      // اتصال، بصرف النظر عن المسار المطلوب. لا قائمة تثبيت كاملة لكل
-      // JS/CSS (أسماؤها متغيّرة بـhash لكل بناء، تحتاج خطوة بناء إضافية
-      // كـvite-plugin-pwa وهذا اعتماد جديد لم نقرره) — يكفي تخزين المستند
-      // الرئيسي فقط هنا؛ باقي الأصول تُخزَّن أثناء التصفح العادي أدناه.
+      // ⚠️ تخزين صريح لصفحة index.html (جذر الموقع) + كل أصولها وقت التثبيت
+      // — هذا هو "قشرة التطبيق" (app shell) التي سنعيدها لأي تنقّل فاشل بلا
+      // اتصال، بصرف النظر عن المسار المطلوب.
       try {
         const shellUrl = self.registration.scope; // مثال: https://x.github.io/QPU_assistant_404/
         const res = await fetch(shellUrl);
         if (res && res.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(APP_SHELL_KEY, res.clone());
+          await cacheShellAndAssets(res, shellUrl);
         }
       } catch {
         // بلا اتصال وقت أول تثبيت (نادر) — التخزين أثناء التصفح لاحقاً يكفي.
@@ -76,11 +121,13 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         try {
           const networkResponse = await fetch(request);
-          // تحديث "القشرة" بصمت من أي تنقّل ناجح متصل — يبقيها محدَّثة مع
-          // كل نشر جديد بلا انتظار حدث install فقط.
+          // تحديث "القشرة" وأصولها بصمت من أي تنقّل ناجح متصل — يبقيها
+          // محدَّثة مع كل نشر جديد بلا انتظار حدث install فقط. event.waitUntil
+          // (لا await مباشر) لأنها قد تشمل عدة طلبات أصول إضافية — لا داعي
+          // تأخير الرد للطالب بانتظارها، لكن يجب إبقاء الـ Service Worker حياً
+          // لإتمامها فعلاً بالخلفية.
           if (networkResponse && networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(APP_SHELL_KEY, networkResponse.clone());
+            event.waitUntil(cacheShellAndAssets(networkResponse.clone(), request.url));
           }
           return networkResponse; // متصل: نترك الشبكة/GitHub Pages تتصرف طبيعياً
         } catch {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import { useStudyPlan } from "../hooks/useStudyPlan.js";
+import { useFavorites } from "../hooks/useFavorites.js";
 import SubjectCard from "../components/subject/SubjectCard.jsx";
 import { fetchFlatCurriculum } from "../lib/curriculum.js";
 
@@ -18,9 +19,21 @@ import { fetchFlatCurriculum } from "../lib/curriculum.js";
 // تُوضَع بنهاية القائمة دائماً — لا سنة فعلية لها بالخطة الرسمية أصلاً.
 // الترتيب يُطبَّق على العرض الافتراضي فقط؛ نتائج البحث تبقى مرتَّبة حسب
 // درجة التطابق (Fuse.js) لأنها أفيد بسياق البحث.
+//
+// ⚠️ تحديث إداري (2026-07-31، طلب مباشر من المستخدم — ميزة "تثبيت المواد"):
+// بدل بناء نظام تخزين مستقل جديد لـ "تثبيت"، أعدت استخدام useFavorites.js
+// الموجود أصلاً (نفس مفتاح localStorage، نفس زر ⭐ بـ SubjectCard.jsx) — قرار
+// مقصود لتفادي وجود آليتين متشابهتين (⭐ مفضلة + 📌 تثبيت منفصل) تربكان
+// الطالب بلا داعٍ حقيقي، ولتجنّب أي تعارض مع ميزة "سؤال الإشعارات" المبنية
+// أصلاً فوق نفس زر المفضلة بـ SubjectCard.jsx (جلسة 2026-07-29). الإضافة
+// الفعلية هنا فقط: قسم "📌 مثبّتة" منفصل أعلى الصفحة (بترتيب التثبيت نفسه،
+// الأحدث تثبيتاً أولاً)، يظهر فقط بالعرض الافتراضي (بلا بحث نشِط) — يطابق
+// نفس استثناء "ترتيب السنة/الفصل" أعلاه تماماً بنفس المنطق (نتائج البحث
+// تبقى بترتيب التطابق فقط، بلا تمييز تثبيت).
 
 export default function SubjectList() {
   const { courses, loading } = useStudyPlan();
+  const { favorites } = useFavorites();
   const [query, setQuery] = useState("");
   const [orderMap, setOrderMap] = useState(null); // Map<id, {year, level}> | null (لسا ما تحمّل)
 
@@ -56,7 +69,16 @@ export default function SubjectList() {
     [sortedCourses]
   );
 
-  const results = query.trim() ? fuse.search(query).map((r) => r.item) : sortedCourses;
+  const isSearching = query.trim().length > 0;
+  const results = isSearching ? fuse.search(query).map((r) => r.item) : sortedCourses;
+
+  // "مثبّتة" = مفضّلة (نفس القائمة، راجع التعليق أعلى الملف)، بترتيب التثبيت
+  // نفسه (آخر ما ثُبِّت يظهر أولاً — الأقرب لتوقّع الطالب من "التثبيت").
+  const pinnedResults = isSearching
+    ? []
+    : [...favorites].reverse().map((id) => sortedCourses.find((c) => c.id === id)).filter(Boolean);
+  const pinnedIds = new Set(pinnedResults.map((c) => c.id));
+  const restResults = isSearching ? results : results.filter((c) => !pinnedIds.has(c.id));
 
   if (loading) return <div className="text-text-muted">...جارِ التحميل</div>;
 
@@ -75,11 +97,31 @@ export default function SubjectList() {
       {results.length === 0 ? (
         <p className="text-text-muted">لا توجد نتائج مطابقة</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((course) => (
-            <SubjectCard key={course.id} subject={course} />
-          ))}
-        </div>
+        <>
+          {pinnedResults.length > 0 && (
+            <div className="mb-6">
+              <div className="mb-2 flex items-center gap-1.5 text-sm font-bold text-text-h">
+                <span>📌</span>
+                <span>المواد المثبّتة</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {pinnedResults.map((course) => (
+                  <SubjectCard key={course.id} subject={course} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pinnedResults.length > 0 && restResults.length > 0 && (
+            <div className="mb-2 text-sm font-bold text-text-h">كل المواد</div>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {restResults.map((course) => (
+              <SubjectCard key={course.id} subject={course} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

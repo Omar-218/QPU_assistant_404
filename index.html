@@ -24,5 +24,46 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // ⚠️ شبكة أمان أخيرة (2026-08-02، إصلاح "صفحة بيضاء بلا تعافي عند
+      // الرجوع للخلف بدون إنترنت"): ErrorBoundary.jsx (React) يغطي أخطاء
+      // *بعد* نجاح تحميل React نفسه. لكن لو حزمة JS الرئيسية فشلت بالتحميل
+      // من الأساس (مثال: كاش sw.js يرجّع HTML صحيح لكن أصل JS المطلوب غير
+      // متاح بالكاش أصلاً بدون نت) فـ React لا يُشغَّل إطلاقاً — لا حاجز
+      // أخطاء React يقدر يتدخّل بهذي الحالة تحديداً، لأنه هو نفسه جزء مما لم
+      // يُحمَّل. هذا السكربت الخام (بلا أي اعتماد على React/الحزمة) هو الشيء
+      // الوحيد المضمون التنفيذ بكل الحالات: لو #root ما زال فارغاً بعد 6
+      // ثوانٍ (وقت أكثر من كافٍ لأي تحميل ناجح، بدون نت أو معه)، نعرض رسالة
+      // + زر "إعادة المحاولة" — بدل شاشة بيضاء صامتة تتطلب من الطالب معرفة
+      // مسبقة بزر تحديث المتصفح بنفسه.
+      (function () {
+        setTimeout(function () {
+          var root = document.getElementById("root");
+          if (root && root.childElementCount > 0) return; // React نجح فعلاً، لا شيء يُفعَل
+          var el = document.createElement("div");
+          el.setAttribute("dir", "rtl");
+          el.style.cssText =
+            "position:fixed;inset:0;display:flex;flex-direction:column;" +
+            "align-items:center;justify-content:center;gap:14px;padding:24px;" +
+            "text-align:center;font-family:system-ui,sans-serif;" +
+            "background:#0b0b0c;color:#e5e5e5;z-index:999999;";
+          var msg = document.createElement("p");
+          msg.style.cssText = "font-size:16px;max-width:320px;line-height:1.6;";
+          msg.textContent = "تعذّر تحميل الصفحة (قد يكون بسبب انقطاع الاتصال بالإنترنت)";
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = "🔄 إعادة المحاولة";
+          btn.style.cssText =
+            "padding:10px 22px;border-radius:8px;border:1px solid #666;" +
+            "background:#1c1c1e;color:#e5e5e5;font-size:14px;cursor:pointer;";
+          btn.onclick = function () {
+            location.reload();
+          };
+          el.appendChild(msg);
+          el.appendChild(btn);
+          document.body.appendChild(el);
+        }, 6000);
+      })();
+    </script>
   </body>
 </html>

@@ -13,6 +13,11 @@ import { useNotifySubscriptions } from "../../hooks/useNotifySubscriptions.js";
 // وزمان طبيعيين (لحظة الإضافة نفسها، لا نافذة منبثقة مزعجة). يمكن تغيير
 // الاختيار لاحقاً بأي وقت من نفس النقطة (زر جرس) بقسم "⭐ المفضلة" بالشريط
 // الجانبي (FavoritesSection.jsx) — راجع تعليقه.
+//
+// ⚠️ تحديث إداري (2026-07-31، ميزة "تثبيت المواد"): نفس زر/تخزين المفضلة
+// هذا صار له تأثير مضاعف أيضاً — يضيف المادة لقسم "📌 المثبّتة" أعلى
+// SubjectList.jsx (راجع تعليق ذلك الملف). عدّلت هنا فقط aria-label/title
+// ليعكسا المعنى الجديد بوضوح للطالب — بلا أي تغيير بمنطق الإشعارات أعلاه.
 
 export default function SubjectCard({ subject }) {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -47,7 +52,8 @@ export default function SubjectCard({ subject }) {
       <button
         type="button"
         onClick={handleToggleFavorite}
-        aria-label={favorite ? "إزالة من المفضلة" : "إضافة للمفضلة"}
+        aria-label={favorite ? "إلغاء تثبيت المادة" : "تثبيت المادة بأعلى القائمة"}
+        title={favorite ? "إلغاء تثبيت المادة" : "تثبيت المادة بأعلى القائمة"}
         className={`absolute left-3 top-3 text-lg leading-none ${
           favorite ? "text-warning-text" : "text-text-muted hover:text-text"
         }`}

@@ -5,6 +5,7 @@ import { useEvents } from "../hooks/useEvents.js";
 import { isEventActive } from "../lib/eventStatus.js";
 import { SECTION_LABELS } from "../lib/sectionLabels.js";
 import { useRecentlyViewed } from "../hooks/useRecentlyViewed.js";
+import { useOfflineSubjectPages } from "../hooks/useOfflineSubjectPages.js";
 import { normalizeScheduleList, formatScheduleEntry } from "../lib/scheduleDays.js";
 import LectureItem from "../components/subject/LectureItem.jsx";
 import EventRequestForm from "../components/subject/EventRequestForm.jsx";
@@ -31,6 +32,12 @@ import UploadRequestForm from "../components/subject/UploadRequestForm.jsx";
 // subjectId + subjectName + sectionLabel، ليتولى المكوّن نفسه شارة "محمّلة"
 // وتأكيد إعادة التنزيل مقابل الفتح المحلي (useOfflineFiles.js). لا تخزين ولا
 // حالة إضافية هنا — كل المنطق داخل LectureItem.jsx حصراً.
+//
+// ⚠️ تحديث (2026-08-01، مهمة المدير — "طوّر طريقة حفظ الصفحات بلا انترنت"):
+// زر "📥 حفظ هذه الصفحة بدون إنترنت" جديد أعلى المحتوى (بعد description،
+// قبل زرّي "اقترح حدثاً/اطلب رفع ملف") — يعمل لأي مادة بصرف النظر عن حالة
+// التثبيت/المفضلة (خلافاً للحفظ الضمني الحالي المربوط بـ FavoritesSection.jsx
+// فقط). راجع src/lib/offlineSubjectPrefetch.js للتفاصيل والتعليل الكامل.
 
 // مسار ملفات pdf/image المنشورة (اتفاق عضو 5): public/pdf/{slug}/...
 // مبني على import.meta.env.BASE_URL عشان يشتغل صح تحت مسار فرعي بـ GitHub Pages.
@@ -53,6 +60,9 @@ export default function Subject() {
   const { id } = useParams();
   const { subject, activeProfessor, lectures, loading, notFound } = useSubjectData(id);
   const { addVisit } = useRecentlyViewed();
+  const { isSaved, savePage } = useOfflineSubjectPages();
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
   // مفتاح العنصر المفتوح حالياً فقط (أو null) — لا نخزّن src/title/type هنا
   // بعد الآن، LectureItem يبنيها بنفسه من item + src الممرَّر له.
   const [openKey, setOpenKey] = useState(null);
@@ -67,6 +77,14 @@ export default function Subject() {
       addVisit(id);
     }
   }, [id, loading, notFound, subject, addVisit]);
+
+  async function handleSavePage() {
+    setSaveBusy(true);
+    setSaveMsg("");
+    const ok = await savePage(id);
+    setSaveMsg(ok ? "✅ تم حفظ الصفحة، متاحة الآن بدون إنترنت" : "تعذّر الحفظ — تحقق من اتصالك بالإنترنت");
+    setSaveBusy(false);
+  }
 
   if (loading) return <div className="text-text-muted">...جارِ التحميل</div>;
   if (notFound) return <div className="text-text-muted">المادة غير موجودة</div>;
@@ -141,7 +159,7 @@ export default function Subject() {
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3 text-sm">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <button
           type="button"
           onClick={() => setOpenForm((prev) => (prev === "event" ? null : "event"))}
@@ -156,7 +174,24 @@ export default function Subject() {
         >
           📎 اطلب رفع ملف
         </button>
+        <button
+          type="button"
+          onClick={handleSavePage}
+          disabled={saveBusy}
+          className={`rounded-md border px-3 py-1.5 transition-colors disabled:opacity-60 ${
+            isSaved(id)
+              ? "border-warning-border bg-warning-bg text-warning-text hover:opacity-90"
+              : "border-border bg-bg-subtle text-text hover:bg-bg-elevated"
+          }`}
+        >
+          {saveBusy
+            ? "...جارِ الحفظ"
+            : isSaved(id)
+              ? "📥 محفوظة بدون إنترنت — تحديث"
+              : "📥 حفظ هذه الصفحة بدون إنترنت"}
+        </button>
       </div>
+      {saveMsg && <p className="mt-1.5 text-xs text-text-muted">{saveMsg}</p>}
 
       {openForm === "event" && (
         <div className="mt-3">

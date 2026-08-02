@@ -15,9 +15,20 @@ let cachedFlat = null;
 export async function fetchFlatCurriculum() {
   if (cachedFlat) return cachedFlat;
 
-  const res = await fetch(`${import.meta.env.BASE_URL}data/curriculum.json`);
-  if (!res.ok) return [];
-  const data = await res.json();
+  // ⚠️ إصلاح (2026-08-02، مهمة المدير — تشخيص "صفحة بيضاء عند الرجوع للخلف
+  // بدون إنترنت"): fetch() هنا كانت بلا try/catch — فشل شبكة حقيقي (بدون نت
+  // + curriculum.json لم يُخزَّن بالكاش بعد، مثال: طالب دخل مباشرة لصفحة مادة
+  // عبر رابط ولم يزر "/" مطلقاً وهو متصل) كان يرمي استثناءً غير مُمسوك من
+  // SubjectList.jsx (الذي لا يستخدم .catch() على هذا الاستدعاء). نفس نمط
+  // useStudyPlan.js تماماً الآن: فشل الجلب = مصفوفة فارغة، لا استثناء أبداً.
+  let data;
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}data/curriculum.json`);
+    if (!res.ok) return [];
+    data = await res.json();
+  } catch {
+    return [];
+  }
 
   const byId = new Map();
 
