@@ -218,7 +218,18 @@ export default function AdminSectionsManager() {
             />
           </div>
           <div className="rounded-lg border border-border bg-bg-subtle p-4">
-            <PublishPanel pkg={pkg} />
+            {/* ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): نفس خلل
+                StudyPlanEditor.jsx بالضبط — onPublishSuccess مفقودة، فـ
+                initialSectionsRef تبقى القديمة و"replacements" المعلَّقة لا
+                تُصفَّر بعد نشر ناجح، فـ"dirty" يستمر true كذباً (تحذير مغادرة
+                زائف) وأي استبدال ملف يُطبَّق مرة أخرى لو ضُغِط "نشر" ثانية. */}
+            <PublishPanel
+              pkg={pkg}
+              onPublishSuccess={() => {
+                initialSectionsRef.current = sections;
+                setReplacements({});
+              }}
+            />
           </div>
         </>
       )}

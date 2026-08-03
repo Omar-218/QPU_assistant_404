@@ -229,7 +229,16 @@ export default function StudyPlanEditor() {
 
       {changed && (
         <div className="rounded-lg border border-border bg-bg-subtle p-4">
-          <PublishPanel pkg={pkg} />
+          {/* ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): onPublishSuccess لم
+              تكن مُمرَّرة هنا إطلاقاً، رغم أن نفس الجلسة (اقتراح #6) طبّقت
+              بالضبط هذا النمط بـ SubjectForm.jsx (راجع handlePublishSuccess
+              هناك). بدونها: original تبقى القديمة للأبد بعد نشر ناجح، فـ
+              "changed" يستمر true بصمت → useUnsavedChangesWarning أعلاه يحذّر
+              الأدمن كذباً من "تعديلات غير منشورة" فور نجاح النشر مباشرة. */}
+          <PublishPanel
+            pkg={pkg}
+            onPublishSuccess={() => setOriginal({ courses })}
+          />
         </div>
       )}
     </div>
