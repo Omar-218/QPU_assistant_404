@@ -161,6 +161,22 @@ export default function AdminHome() {
     };
   }, []);
 
+  // ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): بعد أي نشر ناجح فعلي (حذف
+  // مادة أو تحديث ظهور جماعي)، studyPlan لم تكن تُعاد جلبها إطلاقاً — القائمة
+  // تبقى بحالة قديمة صامتة حتى يُعيد الأدمن تحميل الصفحة يدوياً بنفسه، رغم أن
+  // النشر تم فعلياً على GitHub. لا نستخدم cancelled/AbortController هنا (خلافاً
+  // للتحميل الأولي أعلاه) لأنها استدعاء لحظي واحد بعد حدث نجاح صريح من المستخدم،
+  // لا تأثير سباق محتمل بتغيير مسار/إلغاء تركيب بهذي اللحظة تحديداً.
+  async function refreshSubjects() {
+    try {
+      const plan = await fetchStudyPlan();
+      setStudyPlan(plan);
+    } catch {
+      // فشل إعادة الجلب بعد نشر ناجح فعلاً (نادر: انقطاع نت لحظي) — لا نكسر
+      // الواجهة بخطأ؛ القائمة تبقى بآخر حالة معروفة، والأدمن يقدر يحدّث يدوياً.
+    }
+  }
+
   const subjects = studyPlan.courses ?? [];
 
   // ⚠️ جديد (2026-08-02، اقتراح #1): يُطبَّق فوق subjects مباشرة — hiddenNow
@@ -222,8 +238,17 @@ export default function AdminHome() {
   }
 
   function handleBulkPublishSuccess() {
+    // ⚠️ (2026-08-03، نفس مراجعة الإصلاح أعلاه): أي localOverrides قديمة
+    // لمعرّفات نُشرت للتو يجب مسحها — وإلا معاينة محلية سابقة (toggleLocalHidden)
+    // تطغى بصمت على حالة الخادم الحقيقية الجديدة بعد refreshSubjects أدناه.
+    setLocalOverrides((prev) => {
+      const next = { ...prev };
+      for (const id of selectedIds) delete next[id];
+      return next;
+    });
     setBulkPkg(null);
     clearSelection();
+    refreshSubjects();
   }
 
   function askDelete(id) {
@@ -575,7 +600,18 @@ export default function AdminHome() {
                       >
                         إلغاء الحذف وإغلاق
                       </button>
-                      <PublishPanel pkg={pkg} />
+                      {/* ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): onPublishSuccess
+                          لم تكن مُمرَّرة هنا إطلاقاً — بعد حذف ناجح فعلياً على GitHub،
+                          كانت الواجهة تبقى عالقة بحالة "pkg" هذي للأبد (تعرض PublishPanel
+                          بلا داعٍ لمادة محذوفة فعلاً بالفعل)، والقائمة لا تُحدَّث لتُسقِط
+                          المادة المحذوفة إلا بتحديث يدوي للصفحة. */}
+                      <PublishPanel
+                        pkg={pkg}
+                        onPublishSuccess={() => {
+                          cancelDelete(s.id);
+                          refreshSubjects();
+                        }}
+                      />
                     </div>
                   )}
                 </li>
