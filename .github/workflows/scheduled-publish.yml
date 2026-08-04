@@ -1,0 +1,53 @@
+# ⚠️ ملف جديد — مهمة المدير (اقتراح #10: "جدولة نشر"، 2026-08-04).
+# راجع docs/scheduled-publish.md للتصميم الكامل.
+#
+# تعمل بمعزل تام عن أي متصفح/أدمن مفتوح — بالضبط الغرض من هذي الميزة (نشر
+# محتوى بتاريخ مستقبلي دون الحاجة لبقاء أحد مفتوحاً وقت الموعد نفسه).
+# تستخدم GITHUB_TOKEN الافتراضي الذي توفّره GitHub تلقائياً لكل workflow —
+# **لا تحتاج توكن الأدمن الشخصي إطلاقاً**، ولا أي secret إضافي يُعدّه أحد
+# يدوياً؛ صلاحية الكتابة تُمنَح صراحة بمفتاح permissions أدناه فقط.
+
+name: Scheduled Publish
+
+on:
+  schedule:
+    # ⚠️ كل 15 دقيقة — GitHub لا يضمن دقة أعلى من هذا لجداول cron أصلاً (قد
+    # تتأخر الدورة الفعلية عدة دقائق إضافية وقت الضغط العام على خوادم
+    # GitHub Actions). هذا قيد GitHub نفسه، موثَّق بوضوح للأدمن بواجهة
+    # AdminScheduledPublishes.jsx — لا حل تقني هنا يزيله.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {} # تشغيل يدوي فوري من تبويب Actions، مفيد للاختبار
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "scheduled-publish"
+  cancel-in-progress: false # لا نلغي دورة معالجة جارية فعلياً منتصف الطريق
+
+jobs:
+  process-queue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Process due scheduled publishes
+        run: node .github/scripts/process-scheduled-publishes.mjs
+
+      - name: Commit and push if there are changes
+        run: |
+          git config user.name "assistant404-scheduler"
+          git config user.email "actions@github.com"
+          git add public/data/study-plan.json public/data/scheduled-publishes.json
+          if git diff --cached --quiet; then
+            echo "لا تغييرات فعلية لتُنشَر (لا شيء حان موعده) — لا commit."
+          else
+            git commit -m "🕓 نشر مجدول تلقائي"
+            git push
+          fi

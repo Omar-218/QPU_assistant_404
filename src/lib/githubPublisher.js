@@ -546,6 +546,28 @@ export function buildStudyPlanUpdate(courses) {
   };
 }
 
+// ⚠️ جديد (2026-08-04، طلب مباشر من المستخدم — اقتراح #10 من مراجعة خبير
+// للوحة التحكم: "جدولة نشر"). راجع docs/scheduled-publish.md للتصميم الكامل
+// (لماذا كتابة قائمة انتظار بدل حل آخر، حدود النطاق المدعومة، جدول زمني
+// GitHub Actions). ملخّص هنا: هذي الدالة تكتب public/data/scheduled-publishes.json
+// فقط — commit فوري عادي بتوكن الأدمن الحالي (بلا أي جديد بآلية المصادقة)،
+// **ليست هي التي تُطبِّق التغيير المجدوَل فعلياً** — ذاك عمل GitHub Action
+// منفصلة (.github/workflows/scheduled-publish.yml) تعمل بمعزل تام عن وجود
+// المتصفح/الأدمن مفتوحاً، لأنها تحتاج تعمل حتى لو الأدمن مسكّر جهازه بالكامل.
+//
+// نطاق مدعوم بهذا الإصدار الأول: تغييرات ظهور/ترتيب public/data/study-plan.json
+// فقط (نفس ما يبنيه buildStudyPlanUpdate أعلاه) — **لا** رفع ملفات pdf/image
+// جديدة مجدولاً (كائنات File بالمتصفح لا يمكن تسلسلها لـJSON بسهولة/أمان
+// لتخزينها بقائمة انتظار تقرأها GitHub Action لاحقاً؛ توسيع لهذا يحتاج تصميم
+// إضافي منفصل — راجع "خارج النطاق" بـdocs/scheduled-publish.md).
+export function buildScheduledQueueUpdate(scheduled) {
+  return {
+    kind: "scheduled-queue-update",
+    queuePath: "public/data/scheduled-publishes.json",
+    queueJson: { scheduled },
+  };
+}
+
 // تسميات الأنواع القياسية — تُشتق تلقائياً، بلا حاجة الآدمن يكتبها يدوياً.
 // "other" فقط يعتمد على typeLabel حر كتبه الطالب/عدّله الآدمن (عقد §1.1).
 const EVENT_TYPE_LABELS = {
@@ -768,6 +790,7 @@ export async function publishToGitHub({
 
   const isDeletion = pkg.kind === "subject-deletion";
   const isStudyPlanOnly = pkg.kind === "study-plan-update";
+  const isScheduledQueueUpdate = pkg.kind === "scheduled-queue-update";
   const isEventDecision = pkg.kind === "event-decision";
   const isUploadDecision = pkg.kind === "upload-decision";
 
@@ -846,6 +869,19 @@ export async function publishToGitHub({
       token,
       message: "تحديث خطة المواد",
       base64Content: textToBase64(JSON.stringify(pkg.studyPlanJson, null, 2)),
+    });
+  } else if (isScheduledQueueUpdate) {
+    // ⚠️ جديد (اقتراح #10 — جدولة نشر): commit فوري عادي بتوكن الأدمن نفسه،
+    // يكتب فقط قائمة الانتظار — التطبيق الفعلي للتغيير المجدوَل يحدث لاحقاً
+    // بمعزل تام عبر GitHub Action منفصلة (راجع buildScheduledQueueUpdate أعلاه).
+    await putFile({
+      owner,
+      repo,
+      path: pkg.queuePath,
+      branch,
+      token,
+      message: "تحديث قائمة انتظار النشر المجدوَل",
+      base64Content: textToBase64(JSON.stringify(pkg.queueJson, null, 2)),
     });
   } else if (isEventDecision) {
     // مسار "رفض" فقط (راجع توثيق العقد أعلى الملف) — فرع/PR جديد ومستقل تماماً

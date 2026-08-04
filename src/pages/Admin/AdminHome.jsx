@@ -48,6 +48,7 @@ import { useLastPublishDate } from "../../hooks/useLastPublishDate.js";
 // فقط).
 import { buildSubjectDeletion, buildStudyPlanUpdate } from "../../lib/githubPublisher.js";
 import { exportFullBackupZip } from "../../lib/fullBackup.js";
+import { fetchScheduledQueue, buildScheduleEntry } from "../../lib/scheduledPublish.js";
 
 // ⚠️ تحديث (2026-08-02، طلب مباشر من المستخدم — اقتراح #4 من مراجعة خبير
 // للوحة التحكم: "إجراءات جماعية"): تحديد عدة مواد بـ checkbox (فوق القائمة
@@ -127,6 +128,13 @@ export default function AdminHome() {
   // (buildStudyPlanUpdate) — null يعني لا يوجد إجراء جماعي معروض حالياً.
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkPkg, setBulkPkg] = useState(null);
+  // ⚠️ جديد (اقتراح #10 — جدولة نشر): مسودة جدولة (لقطة courses بعد التغيير
+  // المطلوب، بانتظار موعد/وصف من الأدمن قبل بناء pkg الفعلي).
+  const [scheduleDraft, setScheduleDraft] = useState(null); // { hidden, updatedCourses } | null
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [scheduleDesc, setScheduleDesc] = useState("");
+  const [schedulePkg, setSchedulePkg] = useState(null);
+  const [scheduleError, setScheduleError] = useState("");
 
   // ⚠️ جديد (2026-08-02، اقتراح #8)
   const [backupStatus, setBackupStatus] = useState("idle"); // idle | zipping | error
@@ -237,6 +245,57 @@ export default function AdminHome() {
     setBulkPkg(null);
   }
 
+  // ⚠️ جديد (اقتراح #10 — جدولة نشر): بدل نشر فوري، تفتح نموذج موعد/وصف
+  // مضمَّناً (نفس لقطة courses اللي تبنيها buildBulkVisibility بالضبط —
+  // إعادة استخدام كاملة، الفرق فقط بمصير النتيجة: قائمة انتظار لا نشر فوري).
+  function openScheduleDraft(hidden) {
+    const updatedCourses = subjects.map((s) =>
+      selectedIds.has(s.id) ? { ...s, hidden } : s
+    );
+    setScheduleDraft({ hidden, updatedCourses });
+    setScheduleError("");
+  }
+
+  function cancelScheduleDraft() {
+    setScheduleDraft(null);
+    setSchedulePkg(null);
+    setScheduleAt("");
+    setScheduleDesc("");
+    setScheduleError("");
+  }
+
+  async function confirmScheduleDraft() {
+    setScheduleError("");
+    if (!scheduleAt) {
+      setScheduleError("اختر تاريخاً ووقتاً للتنفيذ أولاً");
+      return;
+    }
+    const publishAt = new Date(scheduleAt);
+    if (Number.isNaN(publishAt.getTime()) || publishAt.getTime() <= Date.now()) {
+      setScheduleError("الموعد يجب أن يكون بالمستقبل");
+      return;
+    }
+    const existingQueue = await fetchScheduledQueue();
+    const pkg = buildScheduleEntry({
+      existingQueue,
+      publishAt: publishAt.toISOString(),
+      description:
+        scheduleDesc.trim() ||
+        (scheduleDraft.hidden ? "إخفاء مواد محدَّدة (مجدوَل)" : "إظهار مواد محدَّدة (مجدوَل)"),
+      courses: scheduleDraft.updatedCourses,
+    });
+    setSchedulePkg(pkg);
+  }
+
+  function handleSchedulePublishSuccess() {
+    // ⚠️ لا refreshSubjects()/تنظيف localOverrides هنا خلافاً لـ
+    // handleBulkPublishSuccess أدناه — هذا commit لقائمة الانتظار فقط، لا
+    // يغيّر study-plan.json الفعلي إطلاقاً، فحالة القائمة المعروضة الآن
+    // صحيحة تماماً كما هي، بلا حاجة أي تحديث.
+    cancelScheduleDraft();
+    clearSelection();
+  }
+
   function handleBulkPublishSuccess() {
     // ⚠️ (2026-08-03، نفس مراجعة الإصلاح أعلاه): أي localOverrides قديمة
     // لمعرّفات نُشرت للتو يجب مسحها — وإلا معاينة محلية سابقة (toggleLocalHidden)
@@ -306,6 +365,12 @@ export default function AdminHome() {
             className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
           >
             📜 سجل التدقيق
+          </Link>
+          <Link
+            to="/admin/scheduled-publishes"
+            className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-elevated"
+          >
+            🕓 النشر المجدوَل
           </Link>
           <button
             type="button"
@@ -456,12 +521,87 @@ export default function AdminHome() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => openScheduleDraft(true)}
+                    className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-xs text-text hover:bg-bg-elevated"
+                    title="جدولة إخفاء المحدَّد لموعد لاحق بدل النشر الآن"
+                  >
+                    🕓 جدولة إخفاء لاحقاً
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openScheduleDraft(false)}
+                    className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-xs text-text hover:bg-bg-elevated"
+                    title="جدولة إظهار المحدَّد لموعد لاحق بدل النشر الآن"
+                  >
+                    🕓 جدولة إظهار لاحقاً
+                  </button>
+                  <button
+                    type="button"
                     onClick={clearSelection}
                     className="rounded-md border border-border px-3 py-1.5 text-xs text-text-muted hover:bg-bg-elevated"
                   >
                     إلغاء التحديد
                   </button>
                 </>
+              )}
+            </div>
+          )}
+
+          {/* نموذج جدولة مضمَّن — منفصل تماماً عن bulkPkg (نشر فوري)، يظهر فقط
+              بعد "🕓 جدولة ...لاحقاً". راجع docs/scheduled-publish.md. */}
+          {scheduleDraft && (
+            <div className="flex flex-col gap-2 rounded-md border border-accent bg-bg-subtle p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-text">
+                  🕓 جدولة {scheduleDraft.hidden ? "إخفاء" : "إظهار"} {selectedIds.size} مادة محدَّدة
+                </p>
+                <button
+                  type="button"
+                  onClick={cancelScheduleDraft}
+                  className="rounded-md border border-border px-3 py-1 text-xs text-text hover:bg-bg-elevated"
+                >
+                  إلغاء
+                </button>
+              </div>
+
+              {!schedulePkg && (
+                <>
+                  <label className="flex flex-col gap-1 text-xs text-text">
+                    موعد التنفيذ
+                    <input
+                      type="datetime-local"
+                      value={scheduleAt}
+                      onChange={(e) => setScheduleAt(e.target.value)}
+                      className="rounded-md border border-border bg-bg px-2 py-1.5 text-sm text-text"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-text">
+                    وصف مختصر (اختياري، يظهر بقائمة "🕓 النشر المجدوَل")
+                    <input
+                      type="text"
+                      value={scheduleDesc}
+                      onChange={(e) => setScheduleDesc(e.target.value)}
+                      placeholder="مثال: إظهار مواد الفصل الجديد"
+                      className="rounded-md border border-border bg-bg px-2 py-1.5 text-sm text-text"
+                    />
+                  </label>
+                  {scheduleError && <p className="text-xs text-danger-text">{scheduleError}</p>}
+                  <p className="text-xs text-text-muted">
+                    ⚠️ التنفيذ الفعلي يحدث تلقائياً عبر GitHub Action كل ~15 دقيقة تقريباً — لا
+                    ضمان دقة أعلى من هذا (قيد GitHub نفسه، لا هذا المشروع).
+                  </p>
+                  <button
+                    type="button"
+                    onClick={confirmScheduleDraft}
+                    className="self-start rounded-md border border-accent bg-bg-elevated px-3 py-1.5 text-xs text-text-h hover:bg-bg"
+                  >
+                    متابعة — بناء الجدولة
+                  </button>
+                </>
+              )}
+
+              {schedulePkg && (
+                <PublishPanel pkg={schedulePkg} onPublishSuccess={handleSchedulePublishSuccess} />
               )}
             </div>
           )}

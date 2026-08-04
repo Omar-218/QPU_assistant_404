@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useStudyPlan } from "../../hooks/useStudyPlan.js";
 import { useFavorites } from "../../hooks/useFavorites.js";
@@ -29,16 +29,30 @@ export default function FavoritesSection() {
   const { events } = useEvents();
   const { isSubscribed, toggleSubscribed } = useNotifySubscriptions();
 
-  // ⚠️ جديد (2026-07-30، طلب مباشر من المستخدم): يخزّن صفحات كل المواد
-  // المفضّلة (subject.json + ملف المحاضرات النشِط) بكاش sw.js بصمت — يغطي
-  // حالتين معاً: المواد المفضّلة أصلاً من قبل (عند تحميل هذا المكوّن أول
-  // مرة)، والمواد المضافة/المحذوفة من المفضلة حديثاً (favorites يتغيّر).
-  // لا علاقة له بتنزيل ملفات pdf/image الفعلية — ذاك اختياري بالكامل ويبقى
-  // من مسؤولية LectureItem.jsx/useOfflineFiles.js فقط. راجع
-  // src/lib/offlineSubjectPrefetch.js للتفاصيل والتعليل الكامل.
+  // ⚠️ جديد (2026-07-30): يخزّن صفحات كل المواد المفضّلة (subject.json +
+  // ملف المحاضرات النشِط) بكاش sw.js بصمت — يغطي حالتين معاً: المواد
+  // المفضّلة أصلاً من قبل (عند تحميل هذا المكوّن أول مرة)، والمواد
+  // المضافة حديثاً للمفضلة. لا علاقة له بتنزيل ملفات pdf/image الفعلية —
+  // ذاك اختياري بالكامل ويبقى من مسؤولية LectureItem.jsx/useOfflineFiles.js
+  // فقط. راجع src/lib/offlineSubjectPrefetch.js للتفاصيل والتعليل الكامل.
+  //
+  // ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): النسخة الأولى كانت تمرّر
+  // `favorites` كاملة لـ prefetchFavoriteSubjectsOffline() بكل مرة يتغيّر
+  // فيها المصفوفة — يعني كل تبديل مفضلة واحد (حتى مجرد *إزالة* مادة!) كان
+  // يُعيد جلب subject.json+lectures لـ**كل** المواد المفضّلة مجدداً، لا
+  // المادة المتغيّرة فقط. لطالب عنده 15 مادة مفضّلة، إضافة مادة 16 كانت
+  // تُطلِق 16×2 طلب شبكة بدل 2 فقط — هدر بيانات حقيقي يتفاقم مع كل تبديل،
+  // **يتعارض مباشرة مع هدف الميزة نفسها** (توفير بيانات لطالب بنت ضعيف/محدود).
+  // الحل: نتتبّع القائمة السابقة بـ useRef ونجلب فقط المواد *المُضافة* حديثاً
+  // (الفرق)، لا القائمة كاملة في كل مرة. أول تحميل للمكوّن لا يزال يغطي كل
+  // المواد المفضّلة مسبقاً (prevFavoritesRef يبدأ فارغاً، فـ"المُضاف" = الكل).
+  const prevFavoritesRef = useRef([]);
   useEffect(() => {
-    if (favorites.length > 0) {
-      prefetchFavoriteSubjectsOffline(favorites);
+    const prev = prevFavoritesRef.current;
+    const newlyAdded = favorites.filter((id) => !prev.includes(id));
+    prevFavoritesRef.current = favorites;
+    if (newlyAdded.length > 0) {
+      prefetchFavoriteSubjectsOffline(newlyAdded);
     }
   }, [favorites]);
 

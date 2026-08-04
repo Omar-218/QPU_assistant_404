@@ -40,6 +40,7 @@ const AdminRequestsQueue = lazy(() => import("./pages/Admin/AdminRequestsQueue.j
 const AdminEventsLog = lazy(() => import("./pages/Admin/AdminEventsLog.jsx"));
 const AdminLinkChecker = lazy(() => import("./pages/Admin/AdminLinkChecker.jsx"));
 const AdminAuditLog = lazy(() => import("./pages/Admin/AdminAuditLog.jsx"));
+const AdminScheduledPublishes = lazy(() => import("./pages/Admin/AdminScheduledPublishes.jsx"));
 
 function PageFallback() {
   return <div className="p-6 text-text-muted">...جارِ التحميل</div>;
@@ -115,6 +116,14 @@ export default function App() {
                   element={
                     <AdminAuthGate>
                       <AdminAuditLog />
+                    </AdminAuthGate>
+                  }
+                />
+                <Route
+                  path="/admin/scheduled-publishes"
+                  element={
+                    <AdminAuthGate>
+                      <AdminScheduledPublishes />
                     </AdminAuthGate>
                   }
                 />

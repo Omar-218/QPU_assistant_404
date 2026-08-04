@@ -35,6 +35,12 @@ function describePackage(pkg) {
   if (pkg.kind === "study-plan-update") {
     return { danger: false, write: [pkg.studyPlanPath], del: [] };
   }
+  if (pkg.kind === "scheduled-queue-update") {
+    // ⚠️ جديد (اقتراح #10 — جدولة نشر): هذا commit فوري لقائمة الانتظار
+    // نفسها فقط، وليس التغيير المجدوَل ذاته — نوضّح هذا صراحة بالمعاينة حتى
+    // لا يظن الأدمن أن الضغط على "نشر" هنا ينشر المحتوى المجدوَل فوراً.
+    return { danger: false, write: [pkg.queuePath], del: [], isQueueOnly: true };
+  }
   // buildSubjectPackage (بلا kind)
   const write = [pkg.subjectPath, pkg.lecturesPath, pkg.studyPlanPath].filter(Boolean);
   const uploads = Array.isArray(pkg.pdfFiles) ? pkg.pdfFiles.map((f) => f.path) : [];
@@ -126,9 +132,18 @@ export default function PublishPanel({ pkg, onPublishSuccess }) {
             ? `حذف نهائي للمادة — ${pkg.slug}`
             : pkg.kind === "study-plan-update"
             ? "تحديث قائمة المواد (study-plan.json) فقط"
+            : pkg.kind === "scheduled-queue-update"
+            ? "تحديث قائمة انتظار النشر المجدوَل"
             : `${pkg.subjectJson?.name ?? pkg.slug} (${pkg.slug}) — ${pkg.pdfFiles?.length ?? 0} ملف`}
         </p>
       </div>
+
+      {preview?.isQueueOnly && (
+        <p className="text-xs text-text-muted">
+          ⚠️ هذا يحفظ الجدولة فقط بقائمة الانتظار — التغيير المجدوَل نفسه لن يُطبَّق إلا بموعده،
+          تلقائياً عبر GitHub Action منفصلة (لا يحتاج هذا المتصفح مفتوحاً وقتها).
+        </p>
+      )}
 
       {preview && (
         <div
