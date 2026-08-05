@@ -104,6 +104,21 @@
       "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/17",
       "createdAt": "2026-07-29T15:05:34.692Z",
       "decidedAt": "2026-07-31T14:53:36.058Z"
+    },
+    {
+      "id": "evt_1785935470868_gk1y",
+      "subjectId": "math-1",
+      "subjectName": "رياضيات (1)",
+      "type": "midterm",
+      "typeLabel": "امتحان منتصف الفصل",
+      "title": "ميد | من أول المقرر إلى الدوال العكسية",
+      "date": "2026-08-11",
+      "submittedByLabel": "",
+      "status": "approved",
+      "adminNote": "",
+      "prUrl": "https://github.com/Omar-218/QPU_assistant_404/pull/30",
+      "createdAt": "2026-08-05T13:11:12.170Z",
+      "decidedAt": "2026-08-05T13:17:30.556Z"
     }
   ]
 }
