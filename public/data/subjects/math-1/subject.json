@@ -17,13 +17,13 @@
     {
       "professorId": "prof-naser-alnaser",
       "professorName": "يوسف كاجان",
-      "active": true,
+      "active": false,
       "lecturesFile": "lectures-prof-naser-alnaser.json"
     },
     {
       "professorId": "naser-alnaser",
       "professorName": "ناصر الناصر",
-      "active": false,
+      "active": true,
       "lecturesFile": "lectures-naser-alnaser.json"
     }
   ]
