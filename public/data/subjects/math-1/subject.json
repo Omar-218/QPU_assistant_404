@@ -3,15 +3,28 @@
   "name": "رياضيات (1)",
   "code": "4310000",
   "hidden": false,
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الثلاثاء",
+        "start": "08:30",
+        "end": "10:10",
+        "location": "ق 4"
+      }
+    ]
+  },
   "professorVariants": [
     {
       "professorId": "prof-naser-alnaser",
       "professorName": "د. ناصر الناصر",
       "active": true,
       "lecturesFile": "lectures-prof-naser-alnaser.json"
+    },
+    {
+      "professorId": "naser-alnaser",
+      "professorName": "ناصر الناصر",
+      "active": false,
+      "lecturesFile": "lectures-naser-alnaser.json"
     }
-  ],
-  "scheduleDays": {
-    "theory": "الثلاثاء 08:30 - 10:10 (ق 4)"
-  }
+  ]
 }
