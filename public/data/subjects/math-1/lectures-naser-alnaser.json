@@ -6,8 +6,20 @@
       "items": [
         {
           "type": "pdf",
-          "title": "مقرر رياضيات 1",
-          "file": "mqrr_ryadyat_1.pdf",
+          "title": "مقرر الرياضيات كامل",
+          "file": "مقرر الرياضيات كامل.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "رياضيات 1محاضرة 1",
+          "file": "رياضيات 1محاضرة 1.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "رياضيات 1محاضرة 2",
+          "file": "رياضيات 1محاضرة 2.pdf",
           "hidden": false
         }
       ]
