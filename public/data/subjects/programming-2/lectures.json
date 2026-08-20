@@ -24,6 +24,19 @@
           "requestOrigin": "student-upload"
         }
       ]
+    },
+    {
+      "section": "exam",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "دورة كويز + ميد — الفصل الثاني 2025/2026 — د. د. علاء السرحان",
+          "file": "دورة كويز + ميد — الفصل الثاني 20252026 — د. د. علاء السرحان.pdf",
+          "hidden": false,
+          "requestOrigin": "student-upload"
+        }
+      ]
     }
   ]
 }
