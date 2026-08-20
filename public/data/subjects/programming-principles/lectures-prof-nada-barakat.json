@@ -66,15 +66,7 @@
     {
       "section": "exam",
       "hidden": false,
-      "items": [
-        {
-          "type": "pdf",
-          "title": "دورة كويز — الفصل الثاني 2025 — د. د. علاء السرحان",
-          "file": "دورة كويز — الفصل الثاني 2025 — د. د. علاء السرحان.pdf",
-          "hidden": false,
-          "requestOrigin": "student-upload"
-        }
-      ]
+      "items": []
     }
   ]
 }
