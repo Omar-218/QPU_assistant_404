@@ -10,6 +10,7 @@ import { normalizeScheduleList, formatScheduleEntry } from "../lib/scheduleDays.
 import LectureItem from "../components/subject/LectureItem.jsx";
 import EventRequestForm from "../components/subject/EventRequestForm.jsx";
 import UploadRequestForm from "../components/subject/UploadRequestForm.jsx";
+import PastExamRequestForm from "../components/subject/PastExamRequestForm.jsx";
 
 // ⚠️ ملف مملوك لعضو 2 — صفحة عرض مادة واحدة (أقسام نظري/عملي/... إلخ).
 // يستهلك useSubjectData(id) (عضو 4) و SECTION_LABELS (جاهز) فقط — لا معرفة
@@ -66,7 +67,7 @@ export default function Subject() {
   // مفتاح العنصر المفتوح حالياً فقط (أو null) — لا نخزّن src/title/type هنا
   // بعد الآن، LectureItem يبنيها بنفسه من item + src الممرَّر له.
   const [openKey, setOpenKey] = useState(null);
-  const [openForm, setOpenForm] = useState(null); // null | "event" | "upload"
+  const [openForm, setOpenForm] = useState(null); // null | "event" | "upload" | "pastExam"
   const { events } = useEvents();
   const activeEvents = events
     .filter((ev) => ev.subjectId === id && isEventActive(ev))
@@ -176,6 +177,13 @@ export default function Subject() {
         </button>
         <button
           type="button"
+          onClick={() => setOpenForm((prev) => (prev === "pastExam" ? null : "pastExam"))}
+          className="rounded-md border border-border bg-bg-subtle px-3 py-1.5 text-text hover:bg-bg-elevated"
+        >
+          🗂️ ارفع دورة امتحانية
+        </button>
+        <button
+          type="button"
           onClick={handleSavePage}
           disabled={saveBusy}
           className={`rounded-md border px-3 py-1.5 transition-colors disabled:opacity-60 ${
@@ -206,6 +214,16 @@ export default function Subject() {
       {openForm === "upload" && (
         <div className="mt-3">
           <UploadRequestForm
+            subjectId={id}
+            subjectName={subject.name}
+            onCancel={() => setOpenForm(null)}
+            onSubmitted={() => {}}
+          />
+        </div>
+      )}
+      {openForm === "pastExam" && (
+        <div className="mt-3">
+          <PastExamRequestForm
             subjectId={id}
             subjectName={subject.name}
             onCancel={() => setOpenForm(null)}
