@@ -164,8 +164,25 @@ function EventEditForm({ edits, setEdits }) {
   );
 }
 
-function UploadEditForm({ edits, setEdits }) {
+/** يفصل اسم الملف إلى (اسم أساسي، امتداد) — الامتداد يُشتَق من الاسم الأصلي
+ * المرفوع فعلياً (originalFileName) دائماً، لا من edits.fileName الحالي، حتى
+ * لو الآدمن بدّل الاسم الأساسي عدة مرات أثناء التعديل. */
+function splitFileName(name) {
+  const m = /\.([a-zA-Z0-9]+)$/.exec(String(name || ""));
+  if (!m) return { base: String(name || ""), ext: "" };
+  return { base: String(name).slice(0, -(m[1].length + 1)), ext: m[1] };
+}
+
+function UploadEditForm({ edits, setEdits, originalFileName }) {
   const sectionKeys = Object.keys(SECTION_LABELS);
+  const { ext } = splitFileName(originalFileName || edits.fileName);
+  const { base: currentBase } = splitFileName(edits.fileName || originalFileName);
+
+  function handleBaseNameChange(e) {
+    const nextBase = e.target.value;
+    setEdits((p) => ({ ...p, fileName: ext ? `${nextBase}.${ext}` : nextBase }));
+  }
+
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       <label className="flex flex-col gap-1 text-xs text-text">
@@ -199,12 +216,15 @@ function UploadEditForm({ edits, setEdits }) {
         </select>
       </label>
       <label className="flex flex-col gap-1 text-xs text-text">
-        اسم الملف (كما رُفع)
-        <input
-          value={edits.fileName ?? ""}
-          readOnly
-          className="rounded-md border border-border bg-bg-elevated px-2 py-1 text-sm text-text-muted"
-        />
+        اسم الملف (قابل للتعديل — اللاحقة محفوظة إلزامياً)
+        <div className="flex items-center gap-1">
+          <input
+            value={currentBase}
+            onChange={handleBaseNameChange}
+            className="min-w-0 flex-1 rounded-md border border-border bg-bg px-2 py-1 text-sm text-text"
+          />
+          {ext && <span className="shrink-0 text-text-muted">.{ext}</span>}
+        </div>
       </label>
       <label className="flex flex-col gap-1 text-xs text-text sm:col-span-2">
         عنوان المحاضرة
@@ -272,6 +292,7 @@ function RequestCard({ item, onResolved }) {
           existingLectures: existingLectures || { sections: [] },
           existingUploadsLog: existingUploadsLog || { requests: [] },
           lecturesFileName,
+          originalFileName: data?.fileName,
         });
         const res = await mergeExistingPR({ token, owner, repo, branch: pr.head.ref, prNumber: pr.number, pkg });
         setResult({ ...res, prUrl: pr.html_url });
@@ -364,7 +385,7 @@ function RequestCard({ item, onResolved }) {
       ) : kind === "event" ? (
         <EventEditForm edits={edits} setEdits={setEdits} />
       ) : (
-        <UploadEditForm edits={edits} setEdits={setEdits} />
+        <UploadEditForm edits={edits} setEdits={setEdits} originalFileName={data?.fileName} />
       )}
 
       {error && <p className="mt-2 text-xs text-danger-text">{error}</p>}

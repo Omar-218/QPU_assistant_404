@@ -623,9 +623,44 @@ export function buildEventDecision(request, { decision, adminNote = "", existing
  * رفع ملف معلَّق، ويضيف عنصر lectures*.json فعلي فقط عند decision="approved"
  * (الملف نفسه مرفوع أصلاً على فرع الطالب بـ studentSubmission.js — هذي
  * الدالة لا ترفع أي ملف، فقط تُسجّله). راجع توثيق العقد أعلى الملف. */
+/** طبقة دفاع خادمية إضافية (نفس نمط §17: لا اعتماد على تحقق الواجهة وحده) —
+ * تفرض أن امتداد اسم الملف النهائي يطابق امتداد الملف المرفوع أصلاً
+ * (originalFileName) دائماً بصرف النظر عمّا وصل بـ request.fileName من
+ * الواجهة (UploadEditForm يفرض هذا أصلاً هناك، لكن لا اعتماد على طرف واحد)،
+ * وتنظّف الاسم الأساسي عبر sanitizeFileName (عضو 4) — نفس القيد المطبَّق على
+ * مسار رفع الأدمن المباشر (sanitizeFileTitle أعلى الملف). */
+function enforceFinalFileName(candidateName, originalName) {
+  const extMatch = /\.([a-zA-Z0-9]+)$/.exec(String(originalName || ""));
+  const ext = extMatch ? extMatch[1] : "";
+  let base = String(candidateName || originalName || "").trim();
+  if (ext && base.toLowerCase().endsWith(`.${ext.toLowerCase()}`)) {
+    base = base.slice(0, -(ext.length + 1));
+  } else {
+    base = base.replace(/\.[a-zA-Z0-9]+$/, "");
+  }
+  const fallbackBase = String(originalName || "").replace(/\.[a-zA-Z0-9]+$/, "");
+  const safeBase = sanitizeFileName(base) || sanitizeFileName(fallbackBase) || "file";
+  return ext ? `${safeBase}.${ext}` : safeBase;
+}
+
+// ⚠️ محدَّث بطلب إدارة مباشر: للآدمن الآن صلاحية تعديل اسم الملف الفعلي قبل
+// القبول (كان مفروضاً عليه اسم الطالب كما هو حرفياً — يحد من صلاحياته).
+// originalFileName هو الاسم الذي رُفع فعلياً على فرع الطالب وقت الإرسال (ثابت،
+// لا يتغيّر)؛ request.fileName قد يحمل الآن اسماً مختلفاً اختاره الآدمن
+// بالواجهة (UploadEditForm، عضو 3) — الامتداد نفسه دائماً محفوظ إلزامياً هناك،
+// فقط الاسم الأساسي قابل للتعديل. لو الاسمان مختلفان، pkg.fileRename يوثّق
+// إعادة التسمية الفعلية المطلوبة على فرع الطالب (ينفّذها mergeExistingPR أدناه
+// قبل أي كتابة JSON، بما إن lecturesJson سيشير للاسم الجديد مباشرة).
 export function buildUploadDecision(
   request,
-  { decision, adminNote = "", existingLectures, existingUploadsLog, lecturesFileName = "lectures.json" } = {}
+  {
+    decision,
+    adminNote = "",
+    existingLectures,
+    existingUploadsLog,
+    lecturesFileName = "lectures.json",
+    originalFileName,
+  } = {}
 ) {
   if (!request?.id) throw new Error("buildUploadDecision: request.id مطلوب");
   if (decision !== "approved" && decision !== "rejected") {
@@ -650,6 +685,13 @@ export function buildUploadDecision(
     decidedAt: new Date().toISOString(),
   };
 
+  // اسم الملف النهائي المحمي (يفرض نفس امتداد originalFileName دائماً، وينظّف
+  // الاسم الأساسي) — يُستخدَم بدل request.fileName الخام بكل ما يلي.
+  const finalFileName = originalFileName
+    ? enforceFinalFileName(request.fileName, originalFileName)
+    : request.fileName;
+  logEntry.fileName = finalFileName;
+
   const nextRequests = idx >= 0 ? requests.map((r, i) => (i === idx ? logEntry : r)) : [...requests, logEntry];
 
   const pkg = {
@@ -663,6 +705,8 @@ export function buildUploadDecision(
   if (decision === "approved") {
     // إعادة استخدام حرفية لعقد أنواع المحتوى الموجود (جلسة 5، §1.2) — بلا أي
     // تمديد. requestOrigin حقل تتبّع فقط لسجل الأدمن، لا يؤثر على العرض.
+    // ⚠️ type الآن request.fileType (pdf/image) بدل "pdf" ثابتة — توافق عكسي:
+    // طلبات قديمة قبل دعم رفع الصور (لا حقل fileType إطلاقاً) تُعامَل كـ pdf.
     const sections = Array.isArray(existingLectures?.sections)
       ? existingLectures.sections.map((s) => ({ ...s, items: [...(s.items || [])] }))
       : [];
@@ -673,15 +717,26 @@ export function buildUploadDecision(
       sections.push(target);
     }
     target.items.push({
-      type: "pdf",
+      type: request.fileType === "image" ? "image" : "pdf",
       title: request.requestedTitle,
-      file: request.fileName,
+      file: finalFileName,
       hidden: false,
       requestOrigin: "student-upload",
     });
 
     pkg.lecturesPath = `public/data/subjects/${request.subjectId}/${lecturesFileName}`;
     pkg.lecturesJson = { sections };
+
+    // ⚠️ جديد: الآدمن قد يكون غيّر اسم الملف بالواجهة (UploadEditForm) عن
+    // الاسم الأصلي المرفوع فعلياً على فرع الطالب — lecturesJson أعلاه يشير
+    // للاسم الجديد مباشرة، فلازم الملف الفعلي على القرص يُعاد تسميته بنفس
+    // الفرع قبل الدمج، وإلا رابط مكسور صامت. لا شيء يتغيّر لو الاسمان متطابقان.
+    if (originalFileName && originalFileName !== finalFileName) {
+      pkg.fileRename = {
+        oldPath: `public/pdf/${request.subjectId}/${originalFileName}`,
+        newPath: `public/pdf/${request.subjectId}/${finalFileName}`,
+      };
+    }
   }
 
   return pkg;
@@ -759,6 +814,40 @@ async function deleteFileIfExists({ owner, repo, path, branch, token, message })
     const body = await res.text();
     throw new Error(`فشل حذف ${path}: ${res.status} ${body}`);
   }
+}
+
+/** يعيد تسمية ملف موجود فعلياً على فرع معيّن (قراءة المحتوى الخام من المسار
+ * القديم + كتابته على المسار الجديد + حذف القديم) — لازمة لمسار "قبول" حين
+ * يغيّر الآدمن اسم الملف بالواجهة (UploadEditForm) عن الاسم الذي رفعه الطالب
+ * أصلاً. الثلاث خطوات على نفس الفرع (لا لمس لـ main مباشرة). */
+async function renameFileOnBranch({ owner, repo, branch, token, oldPath, newPath }) {
+  if (oldPath === newPath) return;
+  const getRes = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(oldPath)}?ref=${encodeURIComponent(branch)}`,
+    { headers: ghHeaders(token) }
+  );
+  if (!getRes.ok) {
+    const body = await getRes.text();
+    throw new Error(`تعذّر قراءة ${oldPath} لإعادة التسمية: ${getRes.status} ${body}`);
+  }
+  const fileData = await getRes.json();
+  await putFile({
+    owner,
+    repo,
+    path: newPath,
+    branch,
+    token,
+    message: `إعادة تسمية ملف — ${oldPath} → ${newPath}`,
+    base64Content: String(fileData.content || "").replace(/\n/g, ""),
+  });
+  await deleteFileIfExists({
+    owner,
+    repo,
+    path: oldPath,
+    branch,
+    token,
+    message: `حذف الاسم القديم بعد إعادة التسمية — ${oldPath}`,
+  });
 }
 
 /** يسرد ملفات مجلد عبر Contents API — لازمة لحذف public/pdf/{slug}/ بالكامل،
@@ -1058,6 +1147,20 @@ export async function mergeExistingPR({ token, owner, repo, branch, prNumber, pk
   }
   if (pkg?.decision && pkg.decision !== "approved") {
     throw new Error('mergeExistingPR: مخصَّصة لمسار "قبول" فقط — استخدم closePendingRequestPR للرفض');
+  }
+
+  // ⚠️ جديد: إعادة تسمية الملف الفعلي على فرع الطالب (لو الآدمن غيّر الاسم
+  // بالواجهة — راجع buildUploadDecision أعلاه) — يجب أن تسبق كتابة lecturesJson
+  // (الذي سيشير للاسم الجديد مباشرة) على نفس الفرع، وإلا رابط مكسور صامت.
+  if (pkg.fileRename) {
+    await renameFileOnBranch({
+      owner,
+      repo,
+      branch,
+      token,
+      oldPath: pkg.fileRename.oldPath,
+      newPath: pkg.fileRename.newPath,
+    });
   }
 
   const writes = [];

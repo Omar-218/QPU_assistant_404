@@ -11,8 +11,13 @@ import { submitUploadRequest } from "../../lib/studentSubmission.js";
 
 const SECTION_KEYS = Object.keys(SECTION_LABELS);
 
-function isPdfFile(f) {
-  return f?.type === "application/pdf";
+// ⚠️ محدَّث بطلب إدارة مباشر: PDF أو صورة (png/jpeg/webp — لا SVG) الآن، لا
+// PDF فقط كسابقاً — نفس القيد بالضبط المطبَّق بـ studentSubmission.js (عضو 5).
+const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
+const ACCEPT_ATTR = ALLOWED_MIME.join(",");
+
+function isAllowedFile(f) {
+  return ALLOWED_MIME.includes(f?.type);
 }
 
 export default function UploadRequestForm({ subjectId, subjectName, onCancel, onSubmitted }) {
@@ -29,9 +34,9 @@ export default function UploadRequestForm({ subjectId, subjectName, onCancel, on
 
   function handleFileChange(e) {
     const picked = e.target.files?.[0] || null;
-    if (picked && !isPdfFile(picked)) {
+    if (picked && !isAllowedFile(picked)) {
       setFile(null);
-      setFileError("يُقبل PDF فقط");
+      setFileError("يُقبل PDF أو صورة (PNG/JPEG/WEBP) فقط");
       return;
     }
     setFileError("");
@@ -105,11 +110,11 @@ export default function UploadRequestForm({ subjectId, subjectName, onCancel, on
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-text-muted">ملف PDF</span>
+        <span className="text-text-muted">ملف PDF أو صورة</span>
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept={ACCEPT_ATTR}
           onChange={handleFileChange}
           className="text-text file:mr-2 file:rounded-md file:border file:border-border file:bg-bg-elevated file:px-2 file:py-1 file:text-text"
           required

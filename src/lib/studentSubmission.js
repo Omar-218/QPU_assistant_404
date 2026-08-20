@@ -26,16 +26,34 @@
 //
 // submitUploadRequest({ subjectId, subjectName, section, requestedTitle,
 //   file, submittedByLabel? }) → { prUrl, prNumber, branch }
-//   يفتح فرع upload-request/{slug}-{timestamp}، يرفع ملف PDF الطالب فعلياً
+//   يفتح فرع upload-request/{slug}-{timestamp}، يرفع ملف الطالب فعلياً
 //   على نفس المسار النهائي (public/pdf/{subjectId}/{fileName}) — القرار
-//   المعتمَد صراحة: PDF فقط (لا رابط خارجي)، يكتب بيانات الطلب كملف JSON
+//   المعتمَد صراحة (⚠️ محدَّث بطلب إدارة مباشر: PDF أو صورة الآن، لا PDF
+//   فقط كسابقاً — لا رابط خارجي بأي الحالتين)، يكتب بيانات الطلب كملف JSON
 //   staging (public/data/_pending/uploads/{id}.json)، ويفتح PR بعنوان
 //   "[upload] {subjectName} — {section} — {requestedTitle}" (عقد §1.4).
+//   requestData يحمل الآن `fileType: "pdf"|"image"` أيضاً — يقرأه
+//   buildUploadDecision (عضو 5، githubPublisher.js) ليبني عنصر lectures.json
+//   بنوع صحيح بدل افتراض pdf دائماً (توافق عكسي: غيابه لدى طلبات قديمة قبل
+//   هذا التحديث يُعامَل كـ "pdf").
 //   ⚠️ الملف غير مرئي بالموقع الحي رغم رفعه الفعلي: هو بفرع منفصل عن main،
 //   وحتى بعد القبول لن يظهر إلا بعد إضافة عنصر يشير له بـ lectures*.json
 //   (تفعله buildUploadDecision بتوكن الأدمن — راجع githubPublisher.js).
 
 import { transliterateToSlug, sanitizeFileName } from "./idSlug.js";
+
+// أنواع الملفات المسموحة لرفع الطالب: PDF أو صورة (png/jpeg/webp — لا SVG،
+// نفس القيد الأمني بالضبط المطبَّق برافع الأدمن، githubPublisher.js
+// IMAGE_MIME_TO_EXT). خريطة مكرَّرة عمداً هنا (لا استيراد من githubPublisher.js
+// — عزل التوكن أعلى الملف)، تُستخدَم أيضاً بامتدادات معروفة لتفادي تكرارها
+// بعنوان الملف (مثال: "عنوان.png.png").
+const ALLOWED_UPLOAD_MIME = {
+  "application/pdf": { ext: "pdf", type: "pdf" },
+  "image/png": { ext: "png", type: "image" },
+  "image/jpeg": { ext: "jpg", type: "image" },
+  "image/webp": { ext: "webp", type: "image" },
+};
+const KNOWN_EXT_PATTERN = /\.(pdf|png|jpe?g|webp)$/i;
 
 // خطة الدفعة 5 §0.1: يُقرأ من متغير بيئة وقت البناء فقط — لا قيمة افتراضية
 // مكتوبة هنا. صلاحياته المطلوبة حصراً: Contents: Write + Pull requests:
@@ -212,11 +230,13 @@ export async function submitUploadRequest({
   if (!subjectId || !requestedTitle || !file) {
     throw new Error("submitUploadRequest: subjectId وrequestedTitle وfile مطلوبة");
   }
-  // قرار المستخدم الصريح (خطة الدفعة 5 §0): PDF فقط، لا رابط خارجي ولا أي
-  // نوع محتوى آخر لطلبات الطلاب.
-  if (file.type !== "application/pdf") {
-    throw new Error("submitUploadRequest: مسموح فقط برفع ملفات PDF");
+  // ⚠️ محدَّث بطلب إدارة مباشر: PDF أو صورة (png/jpeg/webp) الآن، لا PDF فقط
+  // كسابقاً — لا رابط خارجي ولا أي نوع محتوى آخر لطلبات الطلاب.
+  const allowed = ALLOWED_UPLOAD_MIME[file.type];
+  if (!allowed) {
+    throw new Error("submitUploadRequest: مسموح فقط برفع PDF أو صورة (PNG/JPEG/WEBP)");
   }
+  const { ext, type: fileType } = allowed;
 
   const id = makeId("upl");
   const slug = sanitizeBranchSlug(subjectId) || subjectId;
@@ -225,11 +245,13 @@ export async function submitUploadRequest({
 
   // ⚠️ تحديث (طلب إدارة مباشر): اسم الملف الفعلي يطابق العنوان الذي كتبه
   // الطالب بالضبط (بلا تحويل لاتيني) — نفس القرار المطبَّق بـ githubPublisher.js
-  // (عضو 5). نشيل امتداد .pdf لو الطالب كتبه بنفسه بالعنوان لتفادي "عنوان.pdf.pdf".
-  const titleWithoutExt = String(requestedTitle || "").trim().replace(/\.pdf$/i, "");
-  const fallbackWithoutExt = String(file.name || "").trim().replace(/\.pdf$/i, "");
+  // (عضو 5). نشيل أي امتداد معروف لو الطالب كتبه بنفسه بالعنوان لتفادي
+  // "عنوان.png.png"، ثم نضيف امتداد الملف الفعلي المكتشَف من نوعه (لا من
+  // النص المكتوب — يمنع عنواناً يوهم بامتداد مختلف عن المحتوى الحقيقي).
+  const titleWithoutExt = String(requestedTitle || "").trim().replace(KNOWN_EXT_PATTERN, "");
+  const fallbackWithoutExt = String(file.name || "").trim().replace(KNOWN_EXT_PATTERN, "");
   const baseName = sanitizeFileName(titleWithoutExt) || sanitizeFileName(fallbackWithoutExt) || "file";
-  const fileName = `${baseName}.pdf`;
+  const fileName = `${baseName}.${ext}`;
   const filePath = `public/pdf/${subjectId}/${fileName}`;
   const base64Content = await fileToBase64(file);
   await putRequestFile(filePath, branch, `رفع ملف مقترح — ${fileName}`, base64Content);
@@ -241,6 +263,7 @@ export async function submitUploadRequest({
     section: section || "theory",
     requestedTitle,
     fileName,
+    fileType,
     submittedByLabel,
     createdAt: new Date().toISOString(),
   };

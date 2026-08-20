@@ -9,8 +9,10 @@ import { submitUploadRequest } from "../../lib/studentSubmission.js";
 // أي قسم). يعيد استخدام submitUploadRequest (عضو 5) حرفياً بلا أي تعديل على
 // studentSubmission.js أو عقد lectures.json — كل بيانات الدورة (نوعها، سنتها،
 // الدكتور، ملاحظة نمط الأسئلة) تُطوى داخل requestedTitle كنص عرض واحد، فتظهر
-// كعنوان العنصر مباشرة بصفحة المادة بعد قبول الأدمن، بلا أي تمديد لعقد §13.1
-// (نوع العنصر يبقى "pdf" عادياً كما هو).
+// كعنوان العنصر مباشرة بصفحة المادة بعد قبول الأدمن. الملف نفسه PDF أو صورة
+// (png/jpeg/webp — محدَّث بطلب إدارة مباشر) — النوع (pdf/image) يُكتشَف من
+// studentSubmission.js حسب نوع الملف الفعلي ويُحفَظ بحقل fileType بالطلب،
+// يقرأه buildUploadDecision (عضو 5) ليبني عنصر lectures.json بالنوع الصحيح.
 
 const EXAM_KINDS = [
   { value: "final", label: "نهائي" },
@@ -19,8 +21,13 @@ const EXAM_KINDS = [
   { value: "other", label: "أخرى" },
 ];
 
-function isPdfFile(f) {
-  return f?.type === "application/pdf";
+// ⚠️ محدَّث بطلب إدارة مباشر: PDF أو صورة (png/jpeg/webp — لا SVG) الآن، لا
+// PDF فقط كسابقاً — نفس القيد بالضبط المطبَّق بـ studentSubmission.js (عضو 5).
+const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
+const ACCEPT_ATTR = ALLOWED_MIME.join(",");
+
+function isAllowedFile(f) {
+  return ALLOWED_MIME.includes(f?.type);
 }
 
 /** يبني عنوان عرض واحد من حقول الدورة — هذا ما يظهر فعلياً كعنوان العنصر
@@ -55,9 +62,9 @@ export default function PastExamRequestForm({ subjectId, subjectName, onCancel, 
 
   function handleFileChange(e) {
     const picked = e.target.files?.[0] || null;
-    if (picked && !isPdfFile(picked)) {
+    if (picked && !isAllowedFile(picked)) {
       setFile(null);
-      setFileError("يُقبل PDF فقط");
+      setFileError("يُقبل PDF أو صورة (PNG/JPEG/WEBP) فقط");
       return;
     }
     setFileError("");
@@ -161,11 +168,11 @@ export default function PastExamRequestForm({ subjectId, subjectName, onCancel, 
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-text-muted">ملف الدورة (PDF)</span>
+        <span className="text-text-muted">ملف الدورة (PDF أو صورة)</span>
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept={ACCEPT_ATTR}
           onChange={handleFileChange}
           className="text-text file:mr-2 file:rounded-md file:border file:border-border file:bg-bg-elevated file:px-2 file:py-1 file:text-text"
           required
