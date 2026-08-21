@@ -722,6 +722,7 @@ export function buildUploadDecision(
       file: finalFileName,
       hidden: false,
       requestOrigin: "student-upload",
+      requestId: request.id,
     });
 
     pkg.lecturesPath = `public/data/subjects/${request.subjectId}/${lecturesFileName}`;
@@ -740,6 +741,99 @@ export function buildUploadDecision(
   }
 
   return pkg;
+}
+
+// ⚠️ جديد: تراجع عن قرار "قبول" (طلب إدارة مباشر — الآدمن قد يقبل طلباً بالغلط
+// والمحتوى يُنشَر فعلياً). يعمل مرتين: (1) فوراً بعد القبول مباشرة بنفس جلسة
+// لوحة "طلبات الطلاب المعلَّقة" (RequestCard)، و(2) لاحقاً من "سجل الأحداث
+// وطلبات الرفع" (AdminEventsLog) لأي قرار سابق بحالة "approved" حتى لو أُغلقت
+// الصفحة ورُجِع لها بعد فترة. كلا المسارين يستدعيان هذه الدوال، ثم يمرّران
+// النتيجة لـ publishToGitHub (فرع/PR جديد مستقل — لا علاقة له بفرع الطالب
+// الأصلي أساساً، لأن ذاك أُغلق ودُمج مسبقاً وقت "القبول"). العملية بحد ذاتها
+// تتطلب تأكيداً صريحاً بالواجهة قبل الاستدعاء (لا تأكيد إضافي هنا).
+
+/** يبني حزمة تراجع عن قرار حدث مقبول — يعيد حالته إلى "reverted" (يختفي فوراً
+ * من أي عرض نشِط، بما إن isEventStatus.isEventActive يشترط status==="approved"
+ * حرفياً) بدل حذفه من السجل، حفاظاً على أثر التراجع بسجل الأدمن. */
+export function buildUndoEventDecision(eventId, { existingEvents, adminNote = "" } = {}) {
+  if (!eventId) throw new Error("buildUndoEventDecision: eventId مطلوب");
+  const events = Array.isArray(existingEvents?.events) ? [...existingEvents.events] : [];
+  const idx = events.findIndex((e) => e.id === eventId);
+  if (idx < 0) {
+    throw new Error("buildUndoEventDecision: لم يُعثر على هذا الحدث بالسجل (رُبما تراجَع عنه مسبقاً)");
+  }
+  if (events[idx].status !== "approved") {
+    throw new Error('buildUndoEventDecision: هذا الحدث ليس بحالة "مقبول" حالياً — لا شيء للتراجع عنه');
+  }
+
+  const nextEvents = events.map((e, i) =>
+    i === idx
+      ? { ...e, status: "reverted", adminNote: adminNote || e.adminNote || "", revertedAt: new Date().toISOString() }
+      : e
+  );
+
+  return {
+    kind: "event-undo",
+    subjectId: events[idx].subjectId,
+    eventsPath: "public/data/events.json",
+    eventsJson: { events: nextEvents },
+  };
+}
+
+/** يبني حزمة تراجع عن قرار رفع ملف مقبول — يزيل العنصر الفعلي من lectures*.json
+ * (مطابقة بـ requestId المحفوظ على العنصر وقت buildUploadDecision؛ فولباك
+ * لمطابقة اسم الملف لأي عنصر أُنشئ قبل إضافة requestId)، يحذف الملف الفعلي من
+ * public/pdf/{subjectId}/، ويُحدِّث حالة السجل إلى "reverted" (لا يُحذَف
+ * السطر نفسه — أثر التراجع يبقى موثَّقاً). */
+export function buildUndoUploadDecision(
+  requestId,
+  { existingUploadsLog, existingLectures, lecturesFileName = "lectures.json", adminNote = "" } = {}
+) {
+  if (!requestId) throw new Error("buildUndoUploadDecision: requestId مطلوب");
+  const requests = Array.isArray(existingUploadsLog?.requests) ? [...existingUploadsLog.requests] : [];
+  const idx = requests.findIndex((r) => r.id === requestId);
+  if (idx < 0) {
+    throw new Error("buildUndoUploadDecision: لم يُعثر على هذا الطلب بالسجل (رُبما تراجَع عنه مسبقاً)");
+  }
+  const logEntry = requests[idx];
+  if (logEntry.status !== "approved") {
+    throw new Error('buildUndoUploadDecision: هذا الطلب ليس بحالة "approved" حالياً — لا شيء للتراجع عنه');
+  }
+
+  const sections = Array.isArray(existingLectures?.sections)
+    ? existingLectures.sections.map((s) => ({ ...s, items: [...(s.items || [])] }))
+    : [];
+  let removedFile = null;
+  for (const section of sections) {
+    section.items = section.items.filter((item) => {
+      const isMatch =
+        item.requestOrigin === "student-upload" &&
+        (item.requestId ? item.requestId === requestId : item.file === logEntry.fileName);
+      if (isMatch) removedFile = item.file;
+      return !isMatch;
+    });
+  }
+  if (!removedFile) {
+    throw new Error(
+      "buildUndoUploadDecision: تعذّر العثور على العنصر المقابل بـ lectures.json — رُبما عُدِّل أو حُذف يدوياً بعد القبول، يحتاج تدخّلاً يدوياً"
+    );
+  }
+
+  const nextRequests = requests.map((r, i) =>
+    i === idx
+      ? { ...r, status: "reverted", adminNote: adminNote || r.adminNote || "", revertedAt: new Date().toISOString() }
+      : r
+  );
+
+  return {
+    kind: "upload-undo",
+    subjectId: logEntry.subjectId,
+    uploadsLogPath: "public/data/upload-requests-log.json",
+    uploadsLogJson: { requests: nextRequests },
+    lecturesPath: `public/data/subjects/${logEntry.subjectId}/${lecturesFileName}`,
+    lecturesJson: { sections },
+    fileToDelete: `public/pdf/${logEntry.subjectId}/${removedFile}`,
+  };
 }
 
 // --- أدوات GitHub API الداخلية ---
@@ -882,6 +976,8 @@ export async function publishToGitHub({
   const isScheduledQueueUpdate = pkg.kind === "scheduled-queue-update";
   const isEventDecision = pkg.kind === "event-decision";
   const isUploadDecision = pkg.kind === "upload-decision";
+  const isEventUndo = pkg.kind === "event-undo";
+  const isUploadUndo = pkg.kind === "upload-undo";
 
   // خط دفاع: قرارات "قبول" يجب أن تمر حصراً عبر mergeExistingPR (تكتب على
   // فرع الطالب الموجود مسبقاً، حيث يعيش الملف/الحدث الفعلي). لو مُرِّرت هنا
@@ -896,7 +992,11 @@ export async function publishToGitHub({
 
   // ⚠️ قرار المدير الأمني الصريح (جلسة 4): حذف = بلا دمج تلقائي أبداً، بصرف
   // النظر عمّا يُمرَّر بمعامل autoMerge — استثناء دائم لا يقدر أي طرف يتجاوزه.
-  const effectiveAutoMerge = isDeletion ? false : autoMerge;
+  // ⚠️ جديد: upload-undo يحذف ملفاً فعلياً بالريبو (نفس طبيعة isDeletion من
+  // حيث كونه حذفاً حقيقياً لا يمكن التراجع عنه تلقائياً) — نفس القيد يُطبَّق
+  // عليه. event-undo لا يحذف أي ملف (تبديل حالة فقط بـ events.json)، فيبقى
+  // يتبع autoMerge العادي.
+  const effectiveAutoMerge = isDeletion || isUploadUndo ? false : autoMerge;
 
   // 1) sha الفرع الأساسي
   const refRes = await fetch(
@@ -1008,6 +1108,49 @@ export async function publishToGitHub({
         base64Content: textToBase64(JSON.stringify(pkg.lecturesJson, null, 2)),
       });
     }
+  } else if (isEventUndo) {
+    // تبديل حالة فقط بـ events.json — لا لمس لأي ملف فعلي (الأحداث لا ملف لها).
+    await putFile({
+      owner,
+      repo,
+      path: pkg.eventsPath,
+      branch,
+      token,
+      message: `تراجع عن قرار حدث مقبول — ${pkg.subjectId || ""}`,
+      base64Content: textToBase64(JSON.stringify(pkg.eventsJson, null, 2)),
+    });
+  } else if (isUploadUndo) {
+    // ترتيب مهم: نحدّث lectures.json (إزالة العنصر) والسجل أولاً، ثم نحذف
+    // الملف الفعلي أخيراً — لو فشل الحذف لأي سبب، النتيجة الأسوأ ملف يتيم غير
+    // مُشار له من أي مكان (لا ضرر مرئي)، لا العكس (مرجع مكسور صامت).
+    await putFile({
+      owner,
+      repo,
+      path: pkg.uploadsLogPath,
+      branch,
+      token,
+      message: `تراجع عن قرار رفع ملف مقبول — ${pkg.subjectId || ""}`,
+      base64Content: textToBase64(JSON.stringify(pkg.uploadsLogJson, null, 2)),
+    });
+    await putFile({
+      owner,
+      repo,
+      path: pkg.lecturesPath,
+      branch,
+      token,
+      message: `إزالة عنصر بعد التراجع — ${pkg.subjectId || ""}`,
+      base64Content: textToBase64(JSON.stringify(pkg.lecturesJson, null, 2)),
+    });
+    if (pkg.fileToDelete) {
+      await deleteFileIfExists({
+        owner,
+        repo,
+        path: pkg.fileToDelete,
+        branch,
+        token,
+        message: `حذف الملف بعد التراجع عن القبول — ${pkg.fileToDelete}`,
+      });
+    }
   } else {
     // النشر العادي (إضافة/تعديل مادة) — subject.json + lectures.json + كل PDF
     await putFile({
@@ -1063,6 +1206,10 @@ export async function publishToGitHub({
     ? `تسجيل قرار حدث (مرفوض) — ${pkg.subjectId || ""}`
     : isUploadDecision
     ? `تسجيل قرار رفع ملف (مرفوض) — ${pkg.subjectId || ""}`
+    : isEventUndo
+    ? `تراجع عن قرار حدث مقبول — ${pkg.subjectId || ""}`
+    : isUploadUndo
+    ? `تراجع عن قرار رفع ملف مقبول — ${pkg.subjectId || ""}`
     : `نشر محتوى: ${pkg.subjectJson.name} (${pkg.slug})`;
 
   const prBody = isDeletion
@@ -1079,6 +1226,14 @@ export async function publishToGitHub({
           ? "سيُدمَج تلقائياً بـ " + baseBranch + " مباشرة."
           : "يرجى المراجعة قبل الدمج بـ " + baseBranch + " (تم اختيار عدم الدمج التلقائي)."
       }`
+    : isEventUndo
+    ? `تم إنشاء هذا الطلب تلقائياً من لوحة التحكم للتراجع عن قرار "قبول" سابق على حدث طالب (${pkg.subjectId || ""}) — إعادة الحالة إلى "reverted" فيختفي الحدث فوراً من أي عرض نشِط بالموقع.\n\n${
+        effectiveAutoMerge
+          ? "سيُدمَج تلقائياً بـ " + baseBranch + " مباشرة."
+          : "يرجى المراجعة قبل الدمج بـ " + baseBranch + " (تم اختيار عدم الدمج التلقائي)."
+      }`
+    : isUploadUndo
+    ? `تم إنشاء هذا الطلب تلقائياً من لوحة التحكم للتراجع عن قرار "قبول" سابق على رفع ملف طالب (${pkg.subjectId || ""}) — يزيل العنصر من صفحة المادة ويحذف الملف الفعلي من الريبو.\n\n⚠️ هذا يتضمَّن حذف ملف فعلي — يُترك دائماً للمراجعة اليدوية قبل الدمج، بلا استثناء دمج تلقائي مهما كان إعداد النشر.`
     : `تم إنشاء هذا الطلب تلقائياً من لوحة النشر.\n\n- المادة: ${pkg.subjectJson.name} (${pkg.slug})\n- ملفات مضافة: ${pkg.pdfFiles.length}\n\n${
         effectiveAutoMerge
           ? "سيُدمَج تلقائياً بـ " + baseBranch + " مباشرة."

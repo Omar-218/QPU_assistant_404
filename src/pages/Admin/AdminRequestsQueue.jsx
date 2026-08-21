@@ -4,6 +4,8 @@ import { SECTION_LABELS } from "../../lib/sectionLabels.js";
 import {
   buildEventDecision,
   buildUploadDecision,
+  buildUndoEventDecision,
+  buildUndoUploadDecision,
   mergeExistingPR,
   publishToGitHub,
   closePendingRequestPR,
@@ -252,6 +254,10 @@ function RequestCard({ item, onResolved }) {
   const [busy, setBusy] = useState(false); // "accepting" | "rejecting" | false
   const [result, setResult] = useState(null); // { merged, mergeError, prUrl } | null
   const [error, setError] = useState(null);
+  // ⚠️ جديد: تراجع فوري عن قبول بالغلط. "idle" | "confirming" | "undoing" |
+  // "done" | "error" — منفصل تماماً عن busy/error أعلاه (خاصين بالقبول/الرفض
+  // الأصلي فقط) حتى لا يتشابك عرض الحالتين.
+  const [undo, setUndo] = useState({ status: "idle", message: "" });
 
   const token = getStoredToken();
   const owner = DEFAULT_OWNER;
@@ -356,6 +362,58 @@ function RequestCard({ item, onResolved }) {
     }
   }
 
+  // ⚠️ جديد (طلب إدارة مباشر): تراجع فوري بعد قبول بالغلط، بتأكيد صريح
+  // (undo.status === "confirming" يعرضه الزر أدناه قبل التنفيذ الفعلي). لا
+  // علاقة له بفرع الطالب الأصلي (مُغلَق ومدموج مسبقاً وقت "القبول") — فرع/PR
+  // جديد مستقل تماماً عبر publishToGitHub، تماماً كمسار "رفض" أعلاه.
+  async function handleUndo() {
+    setUndo({ status: "undoing", message: "" });
+    try {
+      const requestId = data?.id;
+      const subjectId = edits.subjectId || data?.subjectId;
+      if (kind === "event") {
+        const existingEvents = (await fetchJsonFromMain(token, owner, repo, "public/data/events.json")) || {
+          events: [],
+        };
+        const pkg = buildUndoEventDecision(requestId, {
+          existingEvents,
+          adminNote: "تراجع الآدمن عن قبول سابق (خطأ)",
+        });
+        const res = await publishToGitHub({ token, owner, repo, pkg });
+        setUndo({
+          status: "done",
+          message: res.merged
+            ? "تم التراجع ودُمج بـ main مباشرة — الحدث لن يظهر بعد الآن."
+            : "تم إرسال التراجع — يحتاج دمجاً يدوياً من GitHub قبل أن يختفي الحدث فعلياً.",
+          prUrl: res.prUrl,
+        });
+      } else {
+        const lecturesFileName = await resolveLecturesFileName(token, owner, repo, subjectId);
+        const [existingUploadsLog, existingLectures] = await Promise.all([
+          fetchJsonFromMain(token, owner, repo, "public/data/upload-requests-log.json"),
+          fetchJsonFromMain(token, owner, repo, `public/data/subjects/${subjectId}/${lecturesFileName}`),
+        ]);
+        const pkg = buildUndoUploadDecision(requestId, {
+          existingUploadsLog: existingUploadsLog || { requests: [] },
+          existingLectures: existingLectures || { sections: [] },
+          lecturesFileName,
+          adminNote: "تراجع الآدمن عن قبول سابق (خطأ)",
+        });
+        const res = await publishToGitHub({ token, owner, repo, pkg });
+        // upload-undo يحذف ملفاً فعلياً — effectiveAutoMerge=false دائماً هناك
+        // (نفس قيد الحذف التدميري)، فـ res.merged هنا ثابتة false دوماً.
+        setUndo({
+          status: "done",
+          message:
+            "تم إرسال التراجع (يحذف الملف الفعلي أيضاً) — يحتاج دمجاً يدوياً من GitHub قبل أن يختفي المحتوى فعلياً من الموقع.",
+          prUrl: res.prUrl,
+        });
+      }
+    } catch (err) {
+      setUndo({ status: "error", message: err.message });
+    }
+  }
+
   return (
     <div className="rounded-lg border border-border bg-bg-subtle p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -424,6 +482,62 @@ function RequestCard({ item, onResolved }) {
           <a href={result.prUrl} target="_blank" rel="noreferrer" className="mt-1 block text-xs text-accent underline">
             عرض الطلب
           </a>
+
+          {result.merged && undo.status === "idle" && (
+            <button
+              type="button"
+              onClick={() => setUndo({ status: "confirming", message: "" })}
+              className="mt-3 rounded-md border border-danger-border bg-danger-bg px-3 py-1.5 text-xs text-danger-text hover:opacity-80"
+            >
+              ↩️ تراجع عن هذا القبول
+            </button>
+          )}
+
+          {undo.status === "confirming" && (
+            <div className="mt-3 rounded-md border border-danger-border bg-danger-bg p-3">
+              <p className="text-xs text-danger-text">
+                متأكد إنك تريد التراجع عن هذا القبول؟{" "}
+                {kind === "event"
+                  ? "الحدث سيختفي فوراً من أي عرض نشِط بالموقع."
+                  : "الملف/الصورة سيُزال من صفحة المادة، ويُحذَف فعلياً من الريبو — إجراء لا يمكن التراجع عنه تلقائياً بعدها."}
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  className="rounded-md bg-danger-text px-3 py-1.5 text-xs text-white hover:opacity-90"
+                >
+                  تأكيد التراجع
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUndo({ status: "idle", message: "" })}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-text hover:bg-bg-elevated"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
+
+          {undo.status === "undoing" && (
+            <p className="mt-3 text-xs text-text-muted">...جارِ التراجع</p>
+          )}
+
+          {undo.status === "done" && (
+            <div className="mt-3 rounded-md border border-border bg-bg-subtle p-3 text-xs">
+              <p className="text-text-h">{undo.message}</p>
+              {undo.prUrl && (
+                <a href={undo.prUrl} target="_blank" rel="noreferrer" className="mt-1 block text-accent underline">
+                  عرض طلب التراجع
+                </a>
+              )}
+            </div>
+          )}
+
+          {undo.status === "error" && (
+            <p className="mt-3 text-xs text-danger-text">تعذّر التراجع: {undo.message}</p>
+          )}
         </div>
       )}
     </div>
