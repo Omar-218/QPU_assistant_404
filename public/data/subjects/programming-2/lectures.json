@@ -24,6 +24,18 @@
           "requestOrigin": "student-upload"
         }
       ]
+    },
+    {
+      "section": "notes",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "Programming II Description by Dr. Sarhan _ توصيف المقرر",
+          "file": "Programming II Description by Dr. Sarhan _ توصيف المقرر.pdf",
+          "hidden": false
+        }
+      ]
     }
   ]
 }
