@@ -10,5 +10,36 @@
       "active": true,
       "lecturesFile": "lectures-prof-abdullah-alomar.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الثلاثاء",
+        "start": "08:30",
+        "end": "09:20",
+        "location": "معلوماتية + اتصالات ش 1 · ق 7 هندسة"
+      },
+      {
+        "day": "الثلاثاء",
+        "start": "10:30",
+        "end": "11:20",
+        "location": "معلوماتية + اتصالات ش 2 · ق 7 هندسة"
+      },
+      {
+        "day": "الثلاثاء",
+        "start": "12:30",
+        "end": "13:20",
+        "location": "معلوماتية + اتصالات ش 3 · ق 7 هندسة"
+      },
+      {
+        "day": "الثلاثاء",
+        "start": "14:30",
+        "end": "15:20",
+        "location": "معلوماتية + اتصالات ش 4 · ق 7 هندسة"
+      }
+    ]
+  },
+  "sectionProfessors": {
+    "theory": "د. عبد الله العمر"
+  }
 }

@@ -10,5 +10,36 @@
       "active": true,
       "lecturesFile": "lectures-prof-kamal-sakiker.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الاثنين",
+        "start": "08:30",
+        "end": "09:20",
+        "location": "معلوماتية ش 1 · ق 7 عيادات أسنان"
+      },
+      {
+        "day": "الاثنين",
+        "start": "10:30",
+        "end": "11:20",
+        "location": "معلوماتية ش 2 · ق 9 هندسة"
+      },
+      {
+        "day": "الاثنين",
+        "start": "12:30",
+        "end": "13:20",
+        "location": "معلوماتية ش 3"
+      },
+      {
+        "day": "الاثنين",
+        "start": "14:30",
+        "end": "15:20",
+        "location": "معلوماتية ش 4"
+      }
+    ]
+  },
+  "sectionProfessors": {
+    "theory": "د. محمد حبيب"
+  }
 }

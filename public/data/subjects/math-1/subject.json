@@ -6,10 +6,28 @@
   "scheduleDays": {
     "theory": [
       {
-        "day": "الثلاثاء",
+        "day": "الاثنين",
         "start": "08:30",
-        "end": "10:10",
-        "location": "ق 4"
+        "end": "09:20",
+        "location": "معلوماتية ش 1 · ق 7 عيادات أسنان"
+      },
+      {
+        "day": "الاثنين",
+        "start": "10:30",
+        "end": "11:20",
+        "location": "معلوماتية ش 2 · ق 9 هندسة"
+      },
+      {
+        "day": "الاثنين",
+        "start": "12:30",
+        "end": "13:20",
+        "location": "اتصالات ش 1"
+      },
+      {
+        "day": "الاثنين",
+        "start": "14:30",
+        "end": "15:20",
+        "location": "معلوماتية ش 3"
       }
     ]
   },
@@ -26,5 +44,8 @@
       "active": true,
       "lecturesFile": "lectures-naser-alnaser.json"
     }
-  ]
+  ],
+  "sectionProfessors": {
+    "theory": "د. نصر الحموي"
+  }
 }

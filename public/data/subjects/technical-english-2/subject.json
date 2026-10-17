@@ -6,10 +6,16 @@
   "scheduleDays": {
     "theory": [
       {
-        "day": "الاثنين",
-        "start": "08:30",
-        "end": "15:30",
-        "location": "ق 7"
+        "day": "الثلاثاء",
+        "start": "13:20",
+        "end": "14:20",
+        "location": "معلوماتية + اتصالات ش 1 · ق 7 عيادات أسنان"
+      },
+      {
+        "day": "الثلاثاء",
+        "start": "15:20",
+        "end": "16:20",
+        "location": "معلوماتية + اتصالات ش 2 · ق 7 عيادات أسنان"
       }
     ]
   },
@@ -20,5 +26,8 @@
       "active": true,
       "lecturesFile": "lectures-prof-waad-alzoubi.json"
     }
-  ]
+  ],
+  "sectionProfessors": {
+    "theory": "د. وعد الزعبي"
+  }
 }

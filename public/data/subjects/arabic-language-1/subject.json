@@ -10,5 +10,24 @@
       "active": true,
       "lecturesFile": "lectures-prof-rima-diab.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": [
+      {
+        "day": "الثلاثاء",
+        "start": "09:20",
+        "end": "10:20",
+        "location": "معلوماتية + اتصالات ش 1 · ق 7 عيادات أسنان"
+      },
+      {
+        "day": "الثلاثاء",
+        "start": "11:20",
+        "end": "12:20",
+        "location": "معلوماتية + اتصالات ش 2 · ق 7 عيادات أسنان"
+      }
+    ]
+  },
+  "sectionProfessors": {
+    "theory": "د. همسة خليفة"
+  }
 }
