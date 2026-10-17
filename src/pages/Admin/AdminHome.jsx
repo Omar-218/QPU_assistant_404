@@ -49,6 +49,7 @@ import { useLastPublishDate } from "../../hooks/useLastPublishDate.js";
 import { buildSubjectDeletion, buildStudyPlanUpdate } from "../../lib/githubPublisher.js";
 import { exportFullBackupZip } from "../../lib/fullBackup.js";
 import { fetchScheduledQueue, buildScheduleEntry } from "../../lib/scheduledPublish.js";
+import { fetchFlatCurriculum } from "../../lib/curriculum.js";
 
 // ⚠️ تحديث (2026-08-02، طلب مباشر من المستخدم — اقتراح #4 من مراجعة خبير
 // للوحة التحكم: "إجراءات جماعية"): تحديد عدة مواد بـ checkbox (فوق القائمة
@@ -117,6 +118,14 @@ export default function AdminHome() {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // "all" | "visible" | "hidden"
 
+  // ⚠️ جديد: تصفّح/تعديل مواد فصل دراسي محدد على حدة. المصدر: curriculum.json
+  // (نفس مصدر ترتيب SubjectList)، بلا أي تغيير بشكل study-plan.json أو
+  // subject.json. القيم: "all" | "unlinked" (غير مرتبطة بالخطة) | "elective" |
+  // رقم المستوى كنص ("1".."8"). الفلتر محلي بالكامل ويتكامل مع البحث/الظهور
+  // والتحديد الجماعي (يعمل على المعروض فقط).
+  const [semesterFilter, setSemesterFilter] = useState("all");
+  const [curriculumMap, setCurriculumMap] = useState(null); // Map<id, {year, level, semesterLabel}> | null
+
   // ⚠️ جديد (2026-08-02، اقتراح #3)
   const { count: pendingCount } = usePendingRequestsCount();
 
@@ -169,6 +178,21 @@ export default function AdminHome() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchFlatCurriculum().then((flat) => {
+      if (cancelled) return;
+      setCurriculumMap(
+        new Map(
+          flat.map((c) => [c.id, { year: c.year, level: c.level, semesterLabel: c.semesterLabel }])
+        )
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // ⚠️ إصلاح (2026-08-03، مراجعة مستقلة للمدير): بعد أي نشر ناجح فعلي (حذف
   // مادة أو تحديث ظهور جماعي)، studyPlan لم تكن تُعاد جلبها إطلاقاً — القائمة
   // تبقى بحالة قديمة صامتة حتى يُعيد الأدمن تحميل الصفحة يدوياً بنفسه، رغم أن
@@ -192,7 +216,37 @@ export default function AdminHome() {
   // فقط نستخدم نفس منطق "hidden الأصلي أو localOverrides" هنا أيضاً حتى تعكس
   // الفلترة أي تعديل معاينة محلي فوري.
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  // مفتاح فصل المادة: رقم المستوى كنص | "elective" | "unlinked"
+  function semesterKeyOf(id) {
+    const info = curriculumMap?.get(id);
+    if (!info) return "unlinked";
+    return info.level == null ? "elective" : String(info.level);
+  }
+
+  const semesterCounts = new Map();
+  if (curriculumMap) {
+    for (const s of subjects) {
+      const k = semesterKeyOf(s.id);
+      semesterCounts.set(k, (semesterCounts.get(k) ?? 0) + 1);
+    }
+  }
+  const semesterOptions = curriculumMap
+    ? [
+        ...Array.from({ length: 8 }, (_, i) => {
+          const level = String(i + 1);
+          return {
+            key: level,
+            label: `${i % 2 === 0 ? "الفصل الأول" : "الفصل الثاني"} · م${level}`,
+            year: Math.floor(i / 2) + 1,
+          };
+        }),
+        { key: "elective", label: "اختيارية", year: null },
+        { key: "unlinked", label: "غير مرتبطة بالخطة", year: null },
+      ].filter((o) => (semesterCounts.get(o.key) ?? 0) > 0)
+    : [];
+
   const filteredSubjects = subjects.filter((s) => {
+    if (semesterFilter !== "all" && semesterKeyOf(s.id) !== semesterFilter) return false;
     const hiddenNow = localOverrides[s.id] ?? s.hidden;
     if (visibilityFilter === "visible" && hiddenNow) return false;
     if (visibilityFilter === "hidden" && !hiddenNow) return false;
@@ -455,6 +509,53 @@ export default function AdminHome() {
             <p className="text-sm text-text-muted">لا توجد مواد بعد.</p>
           )}
 
+          {subjects.length > 0 && semesterOptions.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-md border border-border bg-bg-subtle p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-text-h">📅 تصفّح حسب الفصل الدراسي</p>
+                {semesterFilter !== "all" && (
+                  <span className="text-xs text-text-muted">
+                    {filteredSubjects.length} من {subjects.length} مادة
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSemesterFilter("all")}
+                  className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    semesterFilter === "all"
+                      ? "border-accent bg-accent text-white"
+                      : "border-border text-text hover:bg-bg-elevated"
+                  }`}
+                >
+                  كل الفصول ({subjects.length})
+                </button>
+                {semesterOptions.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setSemesterFilter(o.key)}
+                    title={o.year ? `السنة ${o.year}` : undefined}
+                    className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                      semesterFilter === o.key
+                        ? "border-accent bg-accent text-white"
+                        : "border-border text-text hover:bg-bg-elevated"
+                    }`}
+                  >
+                    {o.label} ({semesterCounts.get(o.key)})
+                  </button>
+                ))}
+              </div>
+              {semesterFilter !== "all" && (
+                <p className="text-xs text-text-muted">
+                  القائمة أدناه تعرض هذا الفصل فقط: عدّل أي مادة بزر «تعديل»، أو حدّدها
+                  جميعاً بـ «تحديد الكل» لإخفائها/إظهارها/جدولتها دفعة واحدة.
+                </p>
+              )}
+            </div>
+          )}
+
           {subjects.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -671,6 +772,12 @@ export default function AdminHome() {
                         </p>
                         <p className="text-xs text-text-muted">
                           {s.id} {s.code ? `· ${s.code}` : ""}
+                          {semesterFilter === "all" && curriculumMap && (() => {
+                            const k = semesterKeyOf(s.id);
+                            const label =
+                              k === "unlinked" ? "غير مرتبطة بالخطة" : k === "elective" ? "اختيارية" : `م${k}`;
+                            return ` · ${label}`;
+                          })()}
                         </p>
                       </div>
                     </div>
