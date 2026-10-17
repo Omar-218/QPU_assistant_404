@@ -95,7 +95,39 @@ export default function Subject() {
     setOpenKey((prev) => (prev === key ? null : key));
   }
 
-  const sections = lectures?.sections || [];
+  const allSections = lectures?.sections || [];
+  // ⚠️ ملاحظات المقرر تُعرَض دائماً آخراً (بعد كل الأقسام) بصرف النظر عن ترتيبها
+  // بالبيانات — القسم الخاص "notes" يُستخرج هنا ويُرسَم بالأسفل مع نص description.
+  const sections = allSections.filter((s) => s.section !== "notes");
+  const notesSection = allSections.find((s) => s.section === "notes");
+  const notesItems = notesSection?.items ?? [];
+  const hasNotesBlock = Boolean(subject.description) || notesItems.length > 0;
+
+  function renderItems(items, sectionLabel) {
+    return (
+      <ul className="space-y-2">
+        {items.map((item, idx) => {
+          const type = item.type || "pdf";
+          const key = itemKey(item, idx);
+          const isViewerType = type === "pdf" || type === "image";
+
+          return (
+            <LectureItem
+              key={key}
+              item={item}
+              isOpen={isViewerType && openKey === key}
+              onToggle={isViewerType ? () => toggleFile(key) : undefined}
+              src={isViewerType ? fileSrc(id, item.file) : undefined}
+              fileId={isViewerType && item.file ? `${id}::${item.file}` : undefined}
+              subjectId={id}
+              subjectName={subject.name}
+              sectionLabel={sectionLabel}
+            />
+          );
+        })}
+      </ul>
+    );
+  }
 
   return (
     <div>
@@ -137,15 +169,6 @@ export default function Subject() {
           </div>
         );
       })()}
-
-      {/* ⚠️ جديد: نبذة/رسالة عن المادة (description) — نص خام فقط، بلا Markdown/HTML
-          (نفس عرض عنصر note بـ LectureItem.jsx: white-space: pre-wrap). حقل عرض
-          مستقل تماماً، بلا أي علاقة بـ professorVariants/sections. */}
-      {subject.description && (
-        <div className="mt-3 whitespace-pre-wrap break-words rounded-md border border-border bg-bg-subtle px-4 py-3 text-sm text-text">
-          {subject.description}
-        </div>
-      )}
 
       {activeEvents.length > 0 && (
         <div className="mt-4 rounded-md border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-text">
@@ -246,31 +269,29 @@ export default function Subject() {
             {section.items.length === 0 ? (
               <p className="text-xs text-text-muted">لا توجد ملفات بهذا القسم بعد</p>
             ) : (
-              <ul className="space-y-2">
-                {section.items.map((item, idx) => {
-                  const type = item.type || "pdf";
-                  const key = itemKey(item, idx);
-                  const isViewerType = type === "pdf" || type === "image";
-
-                  return (
-                    <LectureItem
-                      key={key}
-                      item={item}
-                      isOpen={isViewerType && openKey === key}
-                      onToggle={isViewerType ? () => toggleFile(key) : undefined}
-                      src={isViewerType ? fileSrc(id, item.file) : undefined}
-                      fileId={isViewerType && item.file ? `${id}::${item.file}` : undefined}
-                      subjectId={id}
-                      subjectName={subject.name}
-                      sectionLabel={SECTION_LABELS[section.section] || section.section}
-                    />
-                  );
-                })}
-              </ul>
+              renderItems(section.items, SECTION_LABELS[section.section] || section.section)
             )}
           </div>
         ))}
       </div>
+
+      {/* ⚠️ ملاحظات المقرر — آخر شيء بالصفحة: نص الـ description (نص خام فقط،
+          بلا Markdown/HTML، pre-wrap) ثم ملفات/صور/روابط قسم "notes" إن وُجدت. */}
+      {hasNotesBlock && (
+        <div className="mt-8 rounded-lg border border-border bg-bg-subtle px-4 py-3">
+          <h2 className="mb-2 text-sm font-bold text-text-h">{SECTION_LABELS.notes}</h2>
+          {subject.description && (
+            <div className="whitespace-pre-wrap break-words text-sm text-text">
+              {subject.description}
+            </div>
+          )}
+          {notesItems.length > 0 && (
+            <div className={subject.description ? "mt-3" : ""}>
+              {renderItems(notesItems, SECTION_LABELS.notes)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
