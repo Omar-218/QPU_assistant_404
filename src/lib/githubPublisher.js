@@ -142,7 +142,7 @@
 // عربي للاتيني. راجع توثيقها بـ idSlug.js لتفاصيل القرار الكامل.
 import { transliterateToSlug, isValidSlug, sanitizeFileName } from "./idSlug.js";
 
-const SECTION_ORDER = ["theory", "lab", "extra", "exam", "notes"];
+const SECTION_ORDER = ["theory", "lab", "extra", "exam"];
 
 // عناصر pdf/image فقط تنتج ملفاً فعلياً؛ link/note تُكتب مباشرة بالـ JSON بلا رفع.
 const FILE_BACKED_TYPES = new Set(["pdf", "image"]);

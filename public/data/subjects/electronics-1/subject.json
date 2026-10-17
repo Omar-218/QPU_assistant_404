@@ -7,24 +7,6 @@
     "theory": "د. شحادة المرعي",
     "lab": "م. زهير البيك"
   },
-  "scheduleDays": {
-    "theory": [
-      {
-        "day": "الأحد",
-        "start": "08:30",
-        "end": "04:20",
-        "location": "ق 5 هندسة"
-      }
-    ],
-    "lab": [
-      {
-        "day": "الأحد",
-        "start": "08:30",
-        "end": "04:20",
-        "location": "مخبر دارات"
-      }
-    ]
-  },
   "professorVariants": [
     {
       "professorId": "prof-shehade-almaari",
@@ -32,5 +14,9 @@
       "active": true,
       "lecturesFile": "lectures-prof-shehade-almaari.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": "الاثنين 08:30 - 11:55 (ق 3)",
+    "lab": "الاثنين 08:30 - 10:10 (مخبر دارات)"
+  }
 }

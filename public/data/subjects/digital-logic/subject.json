@@ -3,28 +3,6 @@
   "name": "المنطق الرقمي",
   "code": "1120201",
   "hidden": false,
-  "sectionProfessors": {
-    "theory": "معاذ النهار",
-    "lab": "زهير البيك"
-  },
-  "scheduleDays": {
-    "theory": [
-      {
-        "day": "الثلاثاء",
-        "start": "08:30",
-        "end": "16:20",
-        "location": "مبنى العيادات"
-      }
-    ],
-    "lab": [
-      {
-        "day": "الثلاثاء",
-        "start": "08:30",
-        "end": "16:20",
-        "location": "مخبر اتصالات"
-      }
-    ]
-  },
   "professorVariants": [
     {
       "professorId": "prof-muath-alnahar",
@@ -32,5 +10,8 @@
       "active": true,
       "lecturesFile": "lectures-prof-muath-alnahar.json"
     }
-  ]
+  ],
+  "scheduleDays": {
+    "theory": "السبت 08:30 - 15:30 (مخبر حاسب 3 صيدلة - طابق 1)"
+  }
 }
