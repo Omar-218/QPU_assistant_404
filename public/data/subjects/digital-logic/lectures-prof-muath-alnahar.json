@@ -13,6 +13,12 @@
           "title": "منطق_رقمي_2",
           "file": "منطق_رقمي_2.pdf",
           "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "منطق_رقمي_3",
+          "file": "منطق_رقمي_3.pdf",
+          "hidden": false
         }
       ]
     }
