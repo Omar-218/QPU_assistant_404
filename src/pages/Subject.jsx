@@ -6,8 +6,8 @@ import { isEventActive } from "../lib/eventStatus.js";
 import { SECTION_LABELS } from "../lib/sectionLabels.js";
 import { useRecentlyViewed } from "../hooks/useRecentlyViewed.js";
 import { useOfflineSubjectPages } from "../hooks/useOfflineSubjectPages.js";
-import { normalizeScheduleList, formatScheduleEntry } from "../lib/scheduleDays.js";
 import LectureItem from "../components/subject/LectureItem.jsx";
+import ScheduleCard from "../components/subject/ScheduleCard.jsx";
 import EventRequestForm from "../components/subject/EventRequestForm.jsx";
 import UploadRequestForm from "../components/subject/UploadRequestForm.jsx";
 import PastExamRequestForm from "../components/subject/PastExamRequestForm.jsx";
@@ -145,30 +145,9 @@ export default function Subject() {
           </p>
         )
       )}
-      {/* ⚠️ محدَّث: أيام الدوام الأسبوعي — حقل عرض مستقل تماماً (scheduleDays)،
-          بمعزل تام عن منطق professorVariants/lecturesFile. صار يدعم أكثر من
-          موعد بالأسبوع لنفس النوع (نظري الأحد والثلاثاء مثلاً) — كل موعد
-          سطر مستقل. normalizeScheduleList يتعامل تلقائياً مع الشكل النصي
-          القديم لأي مادة لم تُعدَّل بعد عبر النموذج (توافق عكسي كامل). */}
-      {(() => {
-        const theoryEntries = normalizeScheduleList(subject.scheduleDays?.theory);
-        const labEntries = normalizeScheduleList(subject.scheduleDays?.lab);
-        if (theoryEntries.length === 0 && labEntries.length === 0) return null;
-        return (
-          <div className="mt-0.5 flex flex-col gap-0.5 text-xs text-text-muted">
-            {theoryEntries.map((entry, i) => (
-              <span key={`theory-${i}`} className="break-words">
-                دوام النظري: {formatScheduleEntry(entry)}
-              </span>
-            ))}
-            {labEntries.map((entry, i) => (
-              <span key={`lab-${i}`} className="break-words">
-                دوام العملي: {formatScheduleEntry(entry)}
-              </span>
-            ))}
-          </div>
-        );
-      })()}
+      {/* مواعيد الدوام: بطاقة بجدول (ScheduleCard) بدل سطور نصية متتالية — نفس بيانات
+          scheduleDays بلا أي تغيير بشكلها، توافق كامل مع الصيغ القديمة. */}
+      <ScheduleCard scheduleDays={subject.scheduleDays} />
 
       {activeEvents.length > 0 && (
         <div className="mt-4 rounded-md border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-text">
