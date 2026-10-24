@@ -125,6 +125,12 @@
       "name": "رياضيات (3)",
       "code": "4320003",
       "hidden": false
+    },
+    {
+      "id": "economics",
+      "name": "علم الاقتصاد",
+      "code": "2000022",
+      "hidden": false
     }
   ]
 }
