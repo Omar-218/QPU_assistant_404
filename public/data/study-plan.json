@@ -28,7 +28,7 @@
       "id": "engineering-workshops",
       "name": "ورشات هندسية",
       "code": "1310000",
-      "hidden": false
+      "hidden": true
     },
     {
       "id": "engineering-economics",
