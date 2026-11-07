@@ -1,3 +1,34 @@
 {
-  "sections": []
+  "sections": [
+    {
+      "section": "theory",
+      "hidden": false,
+      "items": [
+        {
+          "type": "pdf",
+          "title": "المحاضرة 1 الأولى منطقية",
+          "file": "المحاضرة 1 الأولى منطقية.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "المحاضرة 2 الثانية منطقية",
+          "file": "المحاضرة 2 الثانية منطقية.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "المحاضرة 3  الثالثة منطقية",
+          "file": "المحاضرة 3 الثالثة منطقية.pdf",
+          "hidden": false
+        },
+        {
+          "type": "pdf",
+          "title": "المحاضرة 4 الرابعة منطقية",
+          "file": "المحاضرة 4 الرابعة منطقية.pdf",
+          "hidden": false
+        }
+      ]
+    }
+  ]
 }
