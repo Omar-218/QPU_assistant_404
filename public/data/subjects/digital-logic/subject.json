@@ -3,14 +3,10 @@
   "name": "المنطق الرقمي",
   "code": "1120201",
   "hidden": false,
-  "professorVariants": [
-    {
-      "professorId": "prof-muath-alnahar",
-      "professorName": "د. معاذ النهار",
-      "active": true,
-      "lecturesFile": "lectures-prof-muath-alnahar.json"
-    }
-  ],
+  "sectionProfessors": {
+    "theory": "د. معاذ النهار",
+    "lab": "د. زهير البيك"
+  },
   "scheduleDays": {
     "theory": [
       {
@@ -89,8 +85,18 @@
       }
     ]
   },
-  "sectionProfessors": {
-    "theory": "د. معاذ النهار",
-    "lab": "د. زهير البيك"
-  }
+  "professorVariants": [
+    {
+      "professorId": "prof-muath-alnahar",
+      "professorName": "د. معاذ النهار",
+      "active": false,
+      "lecturesFile": "lectures-prof-muath-alnahar.json"
+    },
+    {
+      "professorId": "d",
+      "professorName": "--- د",
+      "active": true,
+      "lecturesFile": "lectures-d.json"
+    }
+  ]
 }
